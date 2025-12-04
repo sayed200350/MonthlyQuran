@@ -1,0 +1,950 @@
+// UI Management and Rendering
+
+const UI = {
+  // Current date context (defaults to today)
+  currentDate: new Date(),
+  
+  // Show a specific view
+  showView(viewId) {
+    const views = document.querySelectorAll('.view');
+    views.forEach(view => view.classList.add('hidden'));
+    
+    const targetView = document.getElementById(viewId);
+    if (targetView) {
+      targetView.classList.remove('hidden');
+    }
+    
+    // Update tab active state
+    this.updateTabActiveState(viewId);
+    
+    // Save current view to localStorage (skip setup-view)
+    if (viewId !== 'setup-view') {
+      Storage.saveCurrentView(viewId);
+    }
+  },
+  
+  // Initialize tab navigation
+  initTabNavigation() {
+    const tabs = document.querySelectorAll('.nav-tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const viewId = tab.getAttribute('data-view');
+        if (viewId) {
+          this.showView(viewId);
+          
+          // Render the view if needed
+          if (viewId === 'today-view') {
+            this.renderTodayView();
+          } else if (viewId === 'progress-view') {
+            this.renderProgressView();
+          } else if (viewId === 'calendar-view') {
+            if (window.Calendar) {
+              Calendar.initAsView();
+            }
+          } else if (viewId === 'settings-view') {
+            this.renderSettingsView();
+          } else if (viewId === 'credits-view') {
+            // Credits view doesn't need special rendering
+          }
+          // Update navbar label when switching views
+          if (viewId === 'today-view') {
+            this.updateNavbarLabel();
+          }
+        }
+      });
+    });
+  },
+  
+  // Update tab active state
+  updateTabActiveState(viewId) {
+    const tabs = document.querySelectorAll('.nav-tab');
+    tabs.forEach(tab => {
+      const tabViewId = tab.getAttribute('data-view');
+      if (tabViewId === viewId) {
+        tab.classList.add('active');
+      } else {
+        tab.classList.remove('active');
+      }
+    });
+  },
+
+  // Render setup view
+  renderSetupView() {
+    const config = Storage.getConfig();
+    
+    // Ensure theme is initialized
+    if (!Theme.getTheme()) {
+      Theme.init();
+    }
+    
+    const currentTheme = Theme.getTheme();
+    const currentLang = i18n.getLanguage();
+    
+    // Initialize unit type toggle
+    const unitTypeToggle = document.getElementById('unit-type-toggle');
+    if (unitTypeToggle) {
+      const selectedValue = config?.unit_type || 'page';
+      unitTypeToggle.querySelectorAll('.toggle-option').forEach(btn => {
+        if (btn.getAttribute('data-value') === selectedValue) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    }
+    
+    // Initialize language toggle
+    const languageToggle = document.getElementById('setup-language-toggle');
+    if (languageToggle) {
+      const selectedValue = config?.language || currentLang || 'en';
+      languageToggle.querySelectorAll('.toggle-option').forEach(btn => {
+        if (btn.getAttribute('data-value') === selectedValue) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    }
+    
+    // Initialize theme toggle
+    const themeToggle = document.getElementById('setup-theme-toggle');
+    if (themeToggle) {
+      const selectedValue = config?.theme || currentTheme || 'light';
+      themeToggle.querySelectorAll('.toggle-option').forEach(btn => {
+        if (btn.getAttribute('data-value') === selectedValue) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    }
+    
+    // Pre-fill other form fields
+    const totalUnitsInput = document.getElementById('total-units');
+    const startDateInput = document.getElementById('start-date');
+    const progressionNameInput = document.getElementById('progression-name');
+    
+    if (config) {
+      if (totalUnitsInput) totalUnitsInput.value = config.total_units || 30;
+      if (startDateInput) startDateInput.value = config.start_date || '';
+      if (progressionNameInput) progressionNameInput.value = config.progression_name || '';
+    } else {
+      // Set default start date to today (using local date)
+      if (startDateInput && !startDateInput.value) {
+        startDateInput.value = DateUtils ? DateUtils.getLocalDateString(new Date()) : new Date().toISOString().split('T')[0];
+      }
+      // Set default total units to 30
+      if (totalUnitsInput && !totalUnitsInput.value) {
+        totalUnitsInput.value = 30;
+      }
+    }
+    
+    // Initialize toggle event listeners
+    this.initSetupToggles();
+    
+    // Initialize number input buttons
+    this.initNumberInput();
+  },
+  
+    // Initialize number input increment/decrement buttons
+    initNumberInput() {
+      const decreaseBtn = document.getElementById('total-units-decrease');
+      const increaseBtn = document.getElementById('total-units-increase');
+      const input = document.getElementById('total-units');
+      
+      if (decreaseBtn && input) {
+        decreaseBtn.addEventListener('click', () => {
+          const currentValue = parseInt(input.value) || 30;
+          const newValue = Math.max(1, currentValue - 1);
+          input.value = newValue;
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+      }
+      
+      if (increaseBtn && input) {
+        increaseBtn.addEventListener('click', () => {
+          const currentValue = parseInt(input.value) || 30;
+          const newValue = currentValue + 1;
+          input.value = newValue;
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+      }
+    },
+  
+  // Initialize setup toggle event listeners
+  initSetupToggles() {
+    // Unit type toggle
+    const unitTypeToggle = document.getElementById('unit-type-toggle');
+    if (unitTypeToggle) {
+      unitTypeToggle.querySelectorAll('.toggle-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const value = btn.getAttribute('data-value');
+          unitTypeToggle.querySelectorAll('.toggle-option').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        });
+      });
+    }
+    
+    // Language toggle - instant change
+    const languageToggle = document.getElementById('setup-language-toggle');
+    if (languageToggle) {
+      languageToggle.querySelectorAll('.toggle-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const value = btn.getAttribute('data-value');
+          languageToggle.querySelectorAll('.toggle-option').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          
+          // Instant language change
+          i18n.init(value);
+          i18n.translatePage();
+          this.updateLanguageToggles();
+        });
+      });
+    }
+    
+    // Theme toggle - instant change
+    const themeToggle = document.getElementById('setup-theme-toggle');
+    if (themeToggle) {
+      themeToggle.querySelectorAll('.toggle-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const value = btn.getAttribute('data-value');
+          themeToggle.querySelectorAll('.toggle-option').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          
+          // Instant theme change
+          Theme.setTheme(value);
+        });
+      });
+    }
+  },
+
+  // Generate stable ID for an item based on unit type, number, and date
+  generateItemId(unitType, itemNumber, dateMemorized) {
+    // Use stable, deterministic ID that doesn't change between language switches
+    return `item-${unitType}-${itemNumber}-${dateMemorized}`;
+  },
+
+  // Clean up duplicate items based on stable ID pattern
+  cleanupDuplicateItems(config) {
+    if (!config) return;
+    
+    const allItems = Storage.getAllItems();
+    const unitType = config.unit_type || 'page';
+    const startDate = new Date(config.start_date);
+    const totalUnits = config.total_units || 30;
+    const seen = new Map(); // Map of stableId -> item
+    const itemsToKeep = [];
+    
+    // First, process all items and group by stable ID
+    allItems.forEach(item => {
+      if (item.status !== 'active') {
+        itemsToKeep.push(item);
+        return;
+      }
+      
+      // Try to determine the item's stable ID
+      let stableId = null;
+      
+      // If item already has stable ID format, use it
+      if (item.id && item.id.startsWith(`item-${unitType}-`)) {
+        const idParts = item.id.split('-');
+        if (idParts.length >= 6) {
+          // Format: item-{unitType}-{number}-{YYYY}-{MM}-{DD}
+          stableId = item.id;
+        }
+      }
+      
+      // If no stable ID, try to infer from date_memorized
+      if (!stableId && item.date_memorized) {
+        // Calculate which item number this should be based on date
+        const itemDate = DateUtils.normalizeDate(item.date_memorized);
+        const normalizedStartDate = DateUtils.normalizeDate(startDate);
+        const daysDiff = DateUtils.daysDifference(itemDate, normalizedStartDate);
+        if (daysDiff >= 0 && daysDiff < totalUnits) {
+          const itemNumber = daysDiff + 1;
+          stableId = this.generateItemId(unitType, itemNumber, item.date_memorized);
+        }
+      }
+      
+      if (stableId) {
+        if (seen.has(stableId)) {
+          // Duplicate found - merge reviews and keep the one with stable ID
+          const existingItem = seen.get(stableId);
+          const mergedReviewsCompleted = [...new Set([
+            ...(existingItem.reviews_completed || []),
+            ...(item.reviews_completed || [])
+          ])];
+          const mergedReviewsMissed = [...new Set([
+            ...(existingItem.reviews_missed || []),
+            ...(item.reviews_missed || [])
+          ])];
+          
+          existingItem.reviews_completed = mergedReviewsCompleted;
+          existingItem.reviews_missed = mergedReviewsMissed;
+          // Keep the content_reference from the most recent item (current language)
+          existingItem.content_reference = item.content_reference;
+        } else {
+          // First occurrence - ensure it has stable ID and add to seen
+          item.id = stableId;
+          seen.set(stableId, item);
+          itemsToKeep.push(item);
+        }
+      } else {
+        // Can't determine stable ID, keep as-is
+        itemsToKeep.push(item);
+      }
+    });
+    
+    // Save cleaned up items
+    if (itemsToKeep.length !== allItems.length) {
+      localStorage.setItem('quran_memorization_items', JSON.stringify(itemsToKeep));
+    }
+  },
+
+  // Update navbar label based on current date
+  updateNavbarLabel(date = null) {
+    const navLabel = document.querySelector('#nav-today .nav-label');
+    if (!navLabel) return;
+    
+    const targetDate = date || this.currentDate || new Date();
+    const today = DateUtils.normalizeDate(new Date());
+    const target = DateUtils.normalizeDate(targetDate);
+    const isToday = DateUtils.isSameLocalDay(targetDate, today);
+    
+    if (isToday) {
+      // Reset to "Today" translation
+      navLabel.setAttribute('data-i18n', 'nav.today');
+      navLabel.textContent = i18n.t('nav.today');
+    } else {
+      // Show day name - use data attribute to mark it as a day name so translatePage doesn't overwrite it
+      const dayOfWeek = targetDate.getDay();
+      const dayName = i18n.t(`calendar.weekdays.${dayOfWeek}`);
+      navLabel.removeAttribute('data-i18n'); // Remove data-i18n so it doesn't get overwritten by translatePage
+      navLabel.setAttribute('data-day-name', 'true'); // Mark as day name
+      navLabel.textContent = dayName;
+    }
+  },
+
+  // Render today view (unified task list)
+  renderTodayView(targetDate = null) {
+    const config = Storage.getConfig();
+    if (!config) {
+      this.showView('setup-view');
+      return;
+    }
+
+    const date = targetDate || this.currentDate || new Date();
+    this.currentDate = date;
+    const dateStr = DateUtils.getLocalDateString(date);
+    
+    // Update navbar label to show day name if not today
+    this.updateNavbarLabel(date);
+    
+    // Determine if this is a selected date (not real-time today)
+    const today = DateUtils.normalizeDate(new Date());
+    const target = DateUtils.normalizeDate(date);
+    const isSelectedDate = targetDate !== null || target.getTime() !== today.getTime();
+
+    // Clean up any duplicate items before processing
+    this.cleanupDuplicateItems(config);
+
+    // Get all items
+    let allItems = Storage.getAllItems();
+    
+    // Save new items first (before generating schedule to avoid duplicates)
+    const startDate = DateUtils.normalizeDate(config.start_date);
+    const daysSinceStart = DateUtils.daysDifference(date, startDate);
+    
+    // Create items for all days up to and including target date (1 unit per day)
+    // This ensures all units that should exist are created, so their reviews can be scheduled
+    const totalUnits = config.total_units || 30;
+    const unitType = config.unit_type || 'page';
+    
+    // Create items for all days from start_date up to target date (or totalUnits, whichever is smaller)
+    const daysToCreate = Math.min(daysSinceStart + 1, totalUnits);
+    for (let day = 0; day < daysToCreate; day++) {
+      const itemDate = new Date(startDate);
+      itemDate.setDate(itemDate.getDate() + day);
+      const itemDateStr = DateUtils.getLocalDateString(itemDate);
+      const itemNumber = day + 1;
+      const contentRef = Algorithm.formatContentReference(unitType, itemNumber);
+      
+      // Check if this item already exists by stable ID only (content_reference changes with language)
+      const stableId = this.generateItemId(unitType, itemNumber, itemDateStr);
+      const existingItem = allItems.find(
+        item => item.id === stableId || 
+                (item.date_memorized === itemDateStr && 
+                 item.status === 'active' &&
+                 // Check if it matches the pattern (for legacy items without stable IDs)
+                 (item.id.startsWith(`item-${unitType}-${itemNumber}-`) || 
+                  item.id.includes(`-${itemNumber}-${itemDateStr}`)))
+      );
+      
+      if (!existingItem) {
+        // Create and save new item with stable ID
+        const newItem = {
+          id: stableId,
+          content_reference: contentRef,
+          date_memorized: itemDateStr,
+          status: 'active',
+          progression_name: config.progression_name || '',
+          reviews_completed: [],
+          reviews_missed: []
+        };
+        Storage.saveItem(newItem);
+        allItems.push(newItem);
+      } else {
+        // Update existing item: ensure it has stable ID and current language content_reference
+        if (existingItem.id !== stableId) {
+          existingItem.id = stableId;
+        }
+        if (existingItem.content_reference !== contentRef) {
+          existingItem.content_reference = contentRef;
+        }
+        Storage.saveItem(existingItem);
+      }
+    }
+    
+    // Generate schedule with storage check function
+    // Pass isSelectedDate to indicate if we're viewing a manually selected date
+    const schedule = Algorithm.getDailySchedule(
+      dateStr, 
+      allItems, 
+      config,
+      (id, station, date) => Storage.isReviewCompleted(id, station, date),
+      isSelectedDate
+    );
+    
+    // Combine all tasks with priorities
+    const allTasks = [];
+    
+    // New memorization - Priority 1
+    schedule.new_memorization.forEach(item => {
+      allTasks.push({
+        item,
+        priority: 1,
+        station: item.dueStation || 1
+      });
+    });
+    
+    // Yesterday's review - Priority 2
+    schedule.yesterday_review.forEach(item => {
+      allTasks.push({
+        item,
+        priority: 2,
+        station: item.dueStation || 3
+      });
+    });
+    
+    // Spaced review - Priority 3
+    schedule.spaced_review.forEach(item => {
+      allTasks.push({
+        item,
+        priority: 3,
+        station: item.dueStation || null
+      });
+    });
+    
+    // Mark tasks as completed or not
+    allTasks.forEach(task => {
+      const station = task.station || 1;
+      task.isCompleted = Storage.isReviewCompleted(task.item.id, station, dateStr);
+    });
+    
+    // Sort: unchecked first (by priority, then content), then checked (by priority, then content)
+    allTasks.sort((a, b) => {
+      // First, separate completed and uncompleted
+      if (a.isCompleted !== b.isCompleted) {
+        return a.isCompleted ? 1 : -1; // Uncompleted first (false comes before true)
+      }
+      // Within same completion status, sort by priority
+      if (a.priority !== b.priority) {
+        return a.priority - b.priority;
+      }
+      // Then by content reference
+      return a.item.content_reference.localeCompare(b.item.content_reference);
+    });
+    
+    // Render quick stats
+    const statsContainer = document.getElementById('today-stats');
+    if (statsContainer) {
+      const total = allTasks.length;
+      const completed = allTasks.filter(t => t.isCompleted).length;
+      
+      const stats = Components.createQuickStats(total, completed);
+      statsContainer.innerHTML = '';
+      statsContainer.appendChild(stats);
+    }
+    
+    // Render unified task list
+    const tasksContainer = document.getElementById('today-tasks');
+    if (tasksContainer) {
+      tasksContainer.innerHTML = '';
+      
+      if (allTasks.length === 0) {
+        const empty = Components.createEmptyState(i18n.t('dashboard.noItems'));
+        tasksContainer.appendChild(empty);
+      } else {
+        allTasks.forEach(({ item, priority, station }) => {
+          const taskCard = Components.createTaskCard(item, station, priority);
+          tasksContainer.appendChild(taskCard);
+        });
+      }
+    }
+  },
+  
+  // Create all planned items upfront
+  createAllPlannedItems(config) {
+    if (!config || !config.start_date) return;
+    
+    // Clean up duplicates first
+    this.cleanupDuplicateItems(config);
+    
+    const startDate = DateUtils.normalizeDate(config.start_date);
+    const totalUnits = config.total_units || 30;
+    const unitType = config.unit_type || 'page';
+    const allItems = Storage.getAllItems();
+    
+    // Create items for all planned units
+    for (let day = 0; day < totalUnits; day++) {
+      const itemDate = new Date(startDate);
+      itemDate.setDate(itemDate.getDate() + day);
+      const itemDateStr = DateUtils.getLocalDateString(itemDate);
+      const itemNumber = day + 1;
+      const contentRef = Algorithm.formatContentReference(unitType, itemNumber);
+      
+      // Check if this item already exists by stable ID only (content_reference changes with language)
+      const stableId = this.generateItemId(unitType, itemNumber, itemDateStr);
+      const existingItem = allItems.find(
+        item => item.id === stableId || 
+                (item.date_memorized === itemDateStr && 
+                 item.status === 'active' &&
+                 // Check if it matches the pattern (for legacy items without stable IDs)
+                 (item.id.startsWith(`item-${unitType}-${itemNumber}-`) || 
+                  item.id.includes(`-${itemNumber}-${itemDateStr}`)))
+      );
+      
+      if (!existingItem) {
+        // Create and save new item with stable ID
+        const newItem = {
+          id: stableId,
+          content_reference: contentRef,
+          date_memorized: itemDateStr,
+          status: 'active',
+          progression_name: config.progression_name || '',
+          reviews_completed: [],
+          reviews_missed: []
+        };
+        Storage.saveItem(newItem);
+      } else {
+        // Update existing item: ensure it has stable ID and current language content_reference
+        if (existingItem.id !== stableId) {
+          existingItem.id = stableId;
+        }
+        if (existingItem.content_reference !== contentRef) {
+          existingItem.content_reference = contentRef;
+        }
+        // Update progression_name if it's missing
+        if (!existingItem.progression_name && config.progression_name) {
+          existingItem.progression_name = config.progression_name;
+        }
+        Storage.saveItem(existingItem);
+      }
+    }
+  },
+
+  // Render progress view (timeline)
+  renderProgressView() {
+    const config = Storage.getConfig();
+    if (!config) {
+      this.showView('setup-view');
+      return;
+    }
+    
+    // Ensure all planned items exist
+    this.createAllPlannedItems(config);
+    
+    const allItems = Storage.getActiveItems();
+    const timelineContainer = document.getElementById('progress-timeline');
+    if (!timelineContainer) return;
+    
+    timelineContainer.innerHTML = '';
+    
+    if (allItems.length === 0) {
+      const empty = Components.createEmptyState(i18n.t('dashboard.noItems'));
+      timelineContainer.appendChild(empty);
+      return;
+    }
+    
+    // Sort items by memorization date (oldest first)
+    const sortedItems = [...allItems].sort((a, b) => {
+      const dateA = new Date(a.date_memorized);
+      const dateB = new Date(b.date_memorized);
+      return dateA - dateB; // Oldest first
+    });
+    
+    sortedItems.forEach(item => {
+      const timelineItem = Components.createProgressTimelineItem(item);
+      timelineContainer.appendChild(timelineItem);
+    });
+  },
+  
+  // Legacy method for backward compatibility
+  renderDailySchedule(targetDate = null) {
+    this.renderTodayView(targetDate);
+  },
+
+  // Render a schedule section
+  renderScheduleSection(containerId, items, defaultStation) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    if (items.length === 0) {
+      const empty = Components.createEmptyState(i18n.t('dashboard.noItems'));
+      container.appendChild(empty);
+      return;
+    }
+    
+    items.forEach(item => {
+      const station = item.dueStation || defaultStation;
+      const scheduleItem = Components.createScheduleItem(item, station);
+      container.appendChild(scheduleItem);
+    });
+  },
+
+  // Render settings view
+  renderSettingsView() {
+    const config = Storage.getConfig();
+    if (!config) {
+      this.showView('setup-view');
+      return;
+    }
+    
+    // Initialize language toggle
+    const languageToggle = document.getElementById('settings-language-toggle');
+    if (languageToggle) {
+      const selectedValue = config.language || 'en';
+      languageToggle.querySelectorAll('.toggle-option').forEach(btn => {
+        if (btn.getAttribute('data-value') === selectedValue) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    }
+    
+    // Initialize theme toggle
+    const themeToggle = document.getElementById('settings-theme-toggle');
+    if (themeToggle) {
+      const selectedValue = config.theme || 'light';
+      themeToggle.querySelectorAll('.toggle-option').forEach(btn => {
+        if (btn.getAttribute('data-value') === selectedValue) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    }
+    
+    // Set time inputs
+    const morningHourInput = document.getElementById('settings-morning-hour');
+    const eveningHourInput = document.getElementById('settings-evening-hour');
+    
+    if (morningHourInput) {
+      const morningHour = config.morning_hour !== undefined ? config.morning_hour : 6;
+      morningHourInput.value = `${String(morningHour).padStart(2, '0')}:00`;
+    }
+    
+    if (eveningHourInput) {
+      const eveningHour = config.evening_hour !== undefined ? config.evening_hour : 20;
+      eveningHourInput.value = `${String(eveningHour).padStart(2, '0')}:00`;
+    }
+    
+    // Initialize toggle event listeners
+    this.initSettingsToggles();
+  },
+
+  // Initialize settings toggle event listeners
+  initSettingsToggles() {
+    // Language toggle
+    const languageToggle = document.getElementById('settings-language-toggle');
+    if (languageToggle) {
+      languageToggle.querySelectorAll('.toggle-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const value = btn.getAttribute('data-value');
+          languageToggle.querySelectorAll('.toggle-option').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          
+          const config = Storage.getConfig();
+          if (config) {
+            config.language = value;
+            Storage.saveConfig(config);
+            i18n.init(value);
+            i18n.translatePage();
+            this.updateLanguageToggles();
+            this.renderSettingsView();
+          }
+        });
+      });
+    }
+    
+    // Theme toggle
+    const themeToggle = document.getElementById('settings-theme-toggle');
+    if (themeToggle) {
+      themeToggle.querySelectorAll('.toggle-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const value = btn.getAttribute('data-value');
+          themeToggle.querySelectorAll('.toggle-option').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          
+          const config = Storage.getConfig();
+          if (config) {
+            config.theme = value;
+            Storage.saveConfig(config);
+            Theme.setTheme(value);
+          }
+        });
+      });
+    }
+  },
+
+  // Initialize UI event listeners
+  initEventListeners() {
+    // Setup form submission
+    const setupForm = document.getElementById('setup-form');
+    if (setupForm) {
+      setupForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        // Get values from toggles
+        const unitTypeToggle = document.getElementById('unit-type-toggle');
+        const languageToggle = document.getElementById('setup-language-toggle');
+        const themeToggle = document.getElementById('setup-theme-toggle');
+        
+        const unitType = unitTypeToggle?.querySelector('.toggle-option.active')?.getAttribute('data-value') || 'page';
+        const language = languageToggle?.querySelector('.toggle-option.active')?.getAttribute('data-value') || 'en';
+        const theme = themeToggle?.querySelector('.toggle-option.active')?.getAttribute('data-value') || 'light';
+        
+        const config = {
+          unit_type: unitType,
+          total_units: parseInt(document.getElementById('total-units').value) || 30,
+          start_date: document.getElementById('start-date').value,
+          progression_name: document.getElementById('progression-name').value || '',
+          language: language,
+          theme: theme,
+          morning_hour: 6,
+          evening_hour: 20
+        };
+        
+        Storage.saveConfig(config);
+        
+        // Create all items upfront so they appear in progress view
+        this.createAllPlannedItems(config);
+        
+        Theme.setTheme(theme);
+        i18n.init(language);
+        i18n.translatePage();
+        this.initTabNavigation();
+        this.showView('today-view');
+        
+        // Set current date to start_date so tasks for that day are shown
+        // This ensures tasks are created for the selected day regardless of current time
+        const startDate = new Date(config.start_date);
+        this.currentDate = startDate;
+        this.renderTodayView(startDate);
+      });
+    }
+    
+    // Settings time inputs - save on change
+    const morningHourInput = document.getElementById('settings-morning-hour');
+    const eveningHourInput = document.getElementById('settings-evening-hour');
+    
+    if (morningHourInput) {
+      morningHourInput.addEventListener('change', () => {
+        const config = Storage.getConfig();
+        if (config) {
+          const morningTime = morningHourInput.value;
+          config.morning_hour = parseInt(morningTime.split(':')[0]);
+          Storage.saveConfig(config);
+        }
+      });
+    }
+    
+    if (eveningHourInput) {
+      eveningHourInput.addEventListener('change', () => {
+        const config = Storage.getConfig();
+        if (config) {
+          const eveningTime = eveningHourInput.value;
+          config.evening_hour = parseInt(eveningTime.split(':')[0]);
+          Storage.saveConfig(config);
+        }
+      });
+    }
+    
+    // Export button
+    const exportBtn = document.getElementById('settings-export-btn');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', () => {
+        const data = Storage.exportData();
+        if (data) {
+          const blob = new Blob([data], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `quran-memorization-backup-${DateUtils ? DateUtils.getLocalDateString(new Date()) : new Date().toISOString().split('T')[0]}.json`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+      });
+    }
+    
+    // Import button
+    const importBtn = document.getElementById('settings-import-btn');
+    if (importBtn) {
+      importBtn.addEventListener('click', () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'application/json';
+        input.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              Dialog.showImportConfirm(() => {
+                const success = Storage.importData(event.target.result);
+                if (success) {
+                  const config = Storage.getConfig();
+                  if (config) {
+                    Theme.setTheme(config.theme || 'light');
+                    i18n.init(config.language || 'en');
+                    i18n.translatePage();
+                    this.updateLanguageToggles();
+                    this.showView('today-view');
+                    this.renderTodayView();
+                  }
+                }
+              });
+            };
+            reader.readAsText(file);
+          }
+        });
+        input.click();
+      });
+    }
+    
+    // Reset button
+    const resetBtn = document.getElementById('settings-reset-btn');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        Dialog.showResetConfirm(() => {
+          Storage.clearAll();
+          Theme.init();
+          i18n.init('en');
+          i18n.translatePage();
+          this.showView('setup-view');
+          this.renderSetupView();
+        });
+      });
+    }
+    
+    // Progress add button
+    const progressAddBtn = document.getElementById('progress-add-btn');
+    if (progressAddBtn) {
+      progressAddBtn.addEventListener('click', () => {
+        Dialog.showAddMemorizationModal((data) => {
+          const { unitType, totalUnits, startDate, progressionName } = data;
+          const config = Storage.getConfig();
+          
+          if (config) {
+            // Update config with new values (following the same logic as startup wizard)
+            // This allows adding new memorization plans with different parameters
+            config.unit_type = unitType;
+            config.total_units = totalUnits;
+            config.start_date = startDate;
+            config.progression_name = progressionName;
+            Storage.saveConfig(config);
+            
+            // Create all items upfront so they appear in progress view
+            this.createAllPlannedItems(config);
+            
+            this.renderProgressView();
+            this.renderTodayView();
+            if (window.Calendar) {
+              Calendar.render();
+            }
+          }
+        });
+      });
+    }
+    
+    // Theme toggles (all views)
+    const themeToggles = document.querySelectorAll('#theme-toggle, #theme-toggle-progress, #theme-toggle-calendar, #theme-toggle-settings, #theme-toggle-credits');
+    themeToggles.forEach(toggle => {
+      toggle.addEventListener('click', () => {
+        Theme.toggle();
+      });
+    });
+    
+    // Language toggles (all views)
+    const languageToggles = document.querySelectorAll('#language-toggle, #language-toggle-progress, #language-toggle-calendar, #language-toggle-settings, #language-toggle-credits');
+    languageToggles.forEach(toggle => {
+      toggle.addEventListener('click', () => {
+        const config = Storage.getConfig();
+        if (config) {
+          const currentLang = i18n.getLanguage();
+          const newLang = currentLang === 'en' ? 'ar' : 'en';
+          config.language = newLang;
+          Storage.saveConfig(config);
+          i18n.init(newLang);
+          this.updateLanguageToggles();
+          i18n.translatePage();
+          // Re-render current view to update all text
+          const activeView = document.querySelector('.view:not(.hidden)');
+          if (activeView) {
+            const viewId = activeView.id;
+            if (viewId === 'today-view') {
+              this.renderTodayView();
+            } else if (viewId === 'progress-view') {
+              this.renderProgressView();
+            } else if (viewId === 'settings-view') {
+              this.renderSettingsView();
+            } else if (viewId === 'credits-view') {
+              // Credits view doesn't need special rendering, just translate
+            } else if (viewId === 'calendar-view' && window.Calendar) {
+              Calendar.setupNavigationButtons();
+              Calendar.render();
+            }
+          }
+          // Update navbar label after language change
+          this.updateNavbarLabel();
+        }
+      });
+    });
+    this.updateLanguageToggles();
+    
+    // Calendar navigation is handled by Calendar.setupNavigationButtons()
+    // which respects RTL/LTR language direction
+  },
+  
+  // Update language toggle button text (all views)
+  updateLanguageToggles() {
+    const languageToggles = document.querySelectorAll('#language-toggle, #language-toggle-progress, #language-toggle-calendar, #language-toggle-settings, #language-toggle-credits');
+    const currentLang = i18n.getLanguage();
+    languageToggles.forEach(toggle => {
+      const langText = toggle.querySelector('.lang-text');
+      if (langText) {
+        langText.textContent = currentLang === 'en' ? 'AR' : 'EN';
+      }
+    });
+  },
+  
+  // Legacy method for backward compatibility
+  updateLanguageToggle() {
+    this.updateLanguageToggles();
+  }
+};
+
