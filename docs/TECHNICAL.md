@@ -38,8 +38,11 @@ The application uses zero external JavaScript libraries or frameworks:
 
 ### External Resources
 
-- **Google Fonts**: IBM Plex Sans Arabic for Arabic text rendering
+- **Google Fonts**: 
+  - IBM Plex Sans Arabic for Arabic interface text
+  - Scheherazade New for Quran text display
 - **Service Worker**: Native browser API for offline support
+- **Quran API**: alquran.cloud API for surah metadata and text retrieval
 
 ## Browser APIs
 
@@ -64,6 +67,7 @@ localStorage.removeItem('key');
 - `quran_memorization_items` - All memorization items
 - `quran_memorization_current_view` - Last active view
 - `quran_memorization_install_prompt_shown` - PWA install state
+- `quran_surah_metadata` - Cached surah metadata from API
 
 **Limitations**:
 - 5-10MB storage limit (varies by browser)
@@ -592,6 +596,60 @@ try {
 - **SVG Utilities**: Safe DOM creation for icons, eliminating innerHTML XSS risks
 - **Function Splitting**: Large functions split into smaller, testable units
 
+## Quran API Integration
+
+### API Endpoint
+
+**Base URL**: `https://api.alquran.cloud/v1`
+
+### Endpoints Used
+
+1. **GET /meta**: Fetch surah metadata
+   - Returns: List of all surahs with page ranges, verse counts, names
+   - Cached in localStorage after first fetch
+   - Used for: Big surahs preset dropdown
+
+2. **GET /page/{pageNumber}/quran-uthmani**: Fetch page text
+   - Returns: All verses (ayahs) on a specific page
+   - Used for: Reading modal when user clicks read icon
+   - Edition: `quran-uthmani` (Uthmani script)
+
+### Implementation
+
+**File**: `js/quran-api.js`
+
+**Key Functions**:
+- `fetchSurahMetadata()` - Get surah metadata (cached after first fetch)
+- `getBigSurahs()` - Filter surahs with more than 3 pages
+- `getSurahByNumber(number)` - Get specific surah data
+- `fetchPageText(pageNumber)` - Get Quran text for a page
+- `getSurahPageCount(surah)` - Calculate page count from page range
+- `getSurahStartPage(surah)` - Get first page of a surah
+- `getSurahName(surah, language)` - Get surah name in specified language
+
+### Caching Strategy
+
+- Metadata fetched once on first launch
+- Stored in localStorage as `quran_surah_metadata`
+- Subsequent launches use cached data
+- API only called if cache is missing or invalid
+- Works offline after initial fetch
+
+### Font Usage
+
+**Scheherazade New**:
+- Used specifically for Quran text display in reading modal
+- Provides proper Arabic calligraphy rendering
+- Loaded from Google Fonts
+- Applied via CSS: `font-family: 'Scheherazade New', 'IBM Plex Sans Arabic', serif`
+
+### Online/Offline Detection
+
+- Uses `navigator.onLine` to check connectivity
+- Read icon only appears when online
+- Reading modal shows error if offline when trying to fetch text
+- Metadata can be used offline if previously cached
+
 ## Build and Deployment
 
 ### No Build Step Required
@@ -616,13 +674,18 @@ MonthlyQuran/
 ├── js/
 │   ├── app.js         # Application entry
 │   ├── storage.js     # Data persistence
+│   ├── quran-api.js   # Quran API integration
 │   ├── algorithm.js   # Spaced repetition
 │   ├── i18n.js        # Translations
 │   ├── theme.js       # Theme management
 │   ├── components.js  # UI components
 │   ├── ui.js          # View management
 │   ├── calendar.js    # Calendar component
-│   └── dialog.js      # Modal dialogs
+│   ├── dialog.js      # Modal dialogs
+│   └── utils/
+│       ├── logger.js  # Logging utility
+│       ├── svg.js     # SVG icon creation
+│       └── debounce.js # Debounce utility
 └── docs/
     └── *.md           # Documentation
 ```

@@ -260,7 +260,7 @@ const Dialog = {
   },
 
   // Show add memorization modal (similar to setup wizard but without theme/language)
-  showAddMemorizationModal(onSubmit) {
+  async showAddMemorizationModal(onSubmit) {
     const overlay = document.createElement('div');
     overlay.className = 'dialog-overlay';
     overlay.style.cssText = `
@@ -300,6 +300,35 @@ const Dialog = {
     const form = document.createElement('form');
     form.style.cssText = 'margin-top: 1.5rem;';
 
+    // Surah preset
+    const surahPresetGroup = document.createElement('div');
+    surahPresetGroup.className = 'form-group';
+    const surahPresetLabel = document.createElement('label');
+    surahPresetLabel.setAttribute('for', 'add-memorization-surah-preset');
+    surahPresetLabel.textContent = i18n.t('setup.surahPreset');
+    surahPresetGroup.appendChild(surahPresetLabel);
+    
+    const surahPresetSelect = document.createElement('select');
+    surahPresetSelect.id = 'add-memorization-surah-preset';
+    surahPresetSelect.className = 'input';
+    const noneOption = document.createElement('option');
+    noneOption.value = '';
+    noneOption.textContent = i18n.t('setup.surahPresetNone');
+    surahPresetSelect.appendChild(noneOption);
+    
+    // Load big surahs
+    const bigSurahs = await QuranAPI.getBigSurahs();
+    const currentLang = i18n.getLanguage();
+    bigSurahs.forEach(surah => {
+      const option = document.createElement('option');
+      option.value = surah.number;
+      option.textContent = `${surah.number}. ${QuranAPI.getSurahName(surah, currentLang)} (${QuranAPI.getSurahPageCount(surah)} ${i18n.t('units.page')})`;
+      option.dataset.surahData = JSON.stringify(surah);
+      surahPresetSelect.appendChild(option);
+    });
+    surahPresetGroup.appendChild(surahPresetSelect);
+    form.appendChild(surahPresetGroup);
+
     // Unit type toggle
     const unitTypeGroup = document.createElement('div');
     unitTypeGroup.className = 'form-group';
@@ -321,19 +350,61 @@ const Dialog = {
       btn.addEventListener('click', () => {
         unitTypeToggle.querySelectorAll('.toggle-option').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
+        updateUnitTypeDependentFields();
       });
       unitTypeToggle.appendChild(btn);
     });
     unitTypeGroup.appendChild(unitTypeToggle);
     form.appendChild(unitTypeGroup);
 
+    // Start page (conditional, only for pages)
+    const startPageGroup = document.createElement('div');
+    startPageGroup.className = 'form-group';
+    startPageGroup.id = 'add-memorization-start-page-group';
+    startPageGroup.style.display = 'none';
+    const startPageLabel = document.createElement('label');
+    startPageLabel.setAttribute('for', 'add-memorization-start-page');
+    startPageLabel.textContent = i18n.t('setup.startPage');
+    startPageGroup.appendChild(startPageLabel);
+    const startPageInput = document.createElement('input');
+    startPageInput.type = 'number';
+    startPageInput.id = 'add-memorization-start-page';
+    startPageInput.className = 'input';
+    startPageInput.min = '1';
+    startPageInput.max = '604';
+    startPageInput.value = '1';
+    startPageGroup.appendChild(startPageInput);
+    form.appendChild(startPageGroup);
+
     // Total units
     const totalUnitsGroup = document.createElement('div');
     totalUnitsGroup.className = 'form-group';
     const totalUnitsLabel = document.createElement('label');
     totalUnitsLabel.setAttribute('for', 'add-memorization-total-units');
+    totalUnitsLabel.id = 'add-memorization-total-units-label';
     totalUnitsLabel.textContent = i18n.t('setup.totalUnits');
     totalUnitsGroup.appendChild(totalUnitsLabel);
+    
+    // Function to update unit type dependent fields
+    const updateUnitTypeDependentFields = () => {
+      const selectedUnitType = unitTypeToggle.querySelector('.toggle-option.active')?.getAttribute('data-value') || 'page';
+      
+      // Update label
+      let labelKey = 'setup.totalUnits';
+      if (selectedUnitType === 'page') labelKey = 'setup.totalPages';
+      else if (selectedUnitType === 'verse') labelKey = 'setup.totalVerses';
+      else if (selectedUnitType === 'hizb') labelKey = 'setup.totalHizbs';
+      else if (selectedUnitType === 'juz') labelKey = 'setup.totalJuzs';
+      
+      totalUnitsLabel.textContent = i18n.t(labelKey);
+      
+      // Show/hide start page field
+      if (selectedUnitType === 'page') {
+        startPageGroup.style.display = 'block';
+      } else {
+        startPageGroup.style.display = 'none';
+      }
+    };
 
     const numberInputGroup = document.createElement('div');
     numberInputGroup.className = 'number-input-group';
@@ -431,6 +502,40 @@ const Dialog = {
     });
     buttons.appendChild(cancelBtn);
 
+    // Handle surah preset selection
+    surahPresetSelect.addEventListener('change', (e) => {
+      const selectedValue = e.target.value;
+      if (!selectedValue) return;
+      
+      const option = e.target.querySelector(`option[value="${selectedValue}"]`);
+      if (!option || !option.dataset.surahData) return;
+      
+      try {
+        const surah = JSON.parse(option.dataset.surahData);
+        const startPage = QuranAPI.getSurahStartPage(surah);
+        const pageCount = QuranAPI.getSurahPageCount(surah);
+        const surahName = QuranAPI.getSurahName(surah, currentLang);
+        
+        // Set unit type to page
+        unitTypeToggle.querySelectorAll('.toggle-option').forEach(btn => {
+          btn.classList.remove('active');
+          if (btn.getAttribute('data-value') === 'page') {
+            btn.classList.add('active');
+          }
+        });
+        
+        // Update fields
+        totalUnitsInput.value = pageCount;
+        startPageInput.value = startPage;
+        progressionNameInput.value = surahName;
+        
+        // Update dependent fields
+        updateUnitTypeDependentFields();
+      } catch (error) {
+        Logger.error('Error handling surah preset:', error);
+      }
+    });
+
     form.appendChild(buttons);
     form.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -438,9 +543,10 @@ const Dialog = {
       const totalUnits = parseInt(totalUnitsInput.value) || 30;
       const startDate = startDateInput.value;
       const progressionName = progressionNameInput.value || '';
+      const startPage = (unitType === 'page') ? parseInt(startPageInput.value) || 1 : 1;
       
       overlay.remove();
-      if (onSubmit) onSubmit({ unitType, totalUnits, startDate, progressionName });
+      if (onSubmit) onSubmit({ unitType, totalUnits, startDate, progressionName, startPage });
     });
 
     dialog.appendChild(form);

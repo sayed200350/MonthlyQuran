@@ -13,6 +13,18 @@ const App = {
     // Initialize storage, theme, and i18n
     const config = Storage.getConfig();
     
+    // Fetch surah metadata in background (if not cached)
+    if (typeof QuranAPI !== 'undefined') {
+      QuranAPI.fetchSurahMetadata().catch(err => {
+        Logger.error('Error fetching surah metadata on init:', err);
+      });
+    }
+    
+    if (typeof UI === 'undefined') {
+      Logger.error('UI is not defined. Make sure ui.js is loaded before app.js');
+      return;
+    }
+    
     if (config) {
       // Initialize with saved config
       i18n.init(config.language);
@@ -27,7 +39,10 @@ const App = {
       
       // Render the view if needed
       if (savedView === 'today-view') {
-        UI.renderTodayView();
+        // Always show today's tasks on initial load
+        const today = new Date();
+        UI.currentDate = today;
+        UI.renderTodayView(today);
       } else if (savedView === 'progress-view') {
         UI.renderProgressView();
       } else if (savedView === 'calendar-view') {

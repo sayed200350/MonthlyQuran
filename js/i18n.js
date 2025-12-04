@@ -11,10 +11,17 @@ const translations = {
       unitType: 'Unit Type',
       dailyAmount: 'Daily Amount',
       totalUnits: 'Total Units',
+      totalPages: 'Total Pages',
+      totalVerses: 'Total Verses',
+      totalHizbs: 'Total Hizbs',
+      totalJuzs: 'Total Juzs',
       startDate: 'Start Date',
+      startPage: 'Start Page Number',
       progressionName: 'Progression Name',
       language: 'Language',
-      startButton: 'Start Memorization'
+      startButton: 'Start Memorization',
+      surahPreset: 'Big Surahs Preset (Optional)',
+      surahPresetNone: 'None'
     },
     dashboard: {
       newMemorization: 'New Memorization',
@@ -39,7 +46,8 @@ const translations = {
       stats: '{{total}} tasks today, {{completed}} completed',
       priorityNew: 'New',
       priorityYesterday: 'Yesterday',
-      prioritySpaced: 'Review'
+      prioritySpaced: 'Review',
+      readText: 'Read'
     },
     progress: {
       title: 'Memorization Progress',
@@ -147,6 +155,12 @@ const translations = {
       message: 'Add this app to your home screen for quick access and a better experience.',
       installButton: 'Install',
       dismissButton: 'Not Now'
+    },
+    reading: {
+      title: 'Quran Text',
+      close: 'Close',
+      loading: 'Loading...',
+      error: 'Error loading text'
     }
   },
   ar: {
@@ -159,10 +173,17 @@ const translations = {
       unitType: 'نوع الوحدة',
       dailyAmount: 'الكمية اليومية',
       totalUnits: 'إجمالي الوحدات',
+      totalPages: 'إجمالي الصفحات',
+      totalVerses: 'إجمالي الآيات',
+      totalHizbs: 'إجمالي الأحزاب',
+      totalJuzs: 'إجمالي الأجزاء',
       startDate: 'تاريخ البدء',
+      startPage: 'رقم الصفحة الأولى',
       progressionName: 'اسم التقدم',
       language: 'اللغة',
-      startButton: 'بدء الحفظ'
+      startButton: 'بدء الحفظ',
+      surahPreset: 'السور الكبيرة (اختياري)',
+      surahPresetNone: 'لا شيء'
     },
     dashboard: {
       newMemorization: 'الحفظ الجديد',
@@ -187,7 +208,8 @@ const translations = {
       stats: '{{total}} مهمة اليوم، {{completed}} مكتملة',
       priorityNew: 'جديد',
       priorityYesterday: 'أمس',
-      prioritySpaced: 'مراجعة'
+      prioritySpaced: 'مراجعة',
+      readText: 'قراءة'
     },
     progress: {
       title: 'تقدم الحفظ',
@@ -295,6 +317,12 @@ const translations = {
       message: 'أضف هذا التطبيق إلى الشاشة الرئيسية للوصول السريع وتجربة أفضل.',
       installButton: 'تثبيت',
       dismissButton: 'ليس الآن'
+    },
+    reading: {
+      title: 'نص القرآن',
+      close: 'إغلاق',
+      loading: 'جاري التحميل...',
+      error: 'خطأ في تحميل النص'
     }
   }
 };

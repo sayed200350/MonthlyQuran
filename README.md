@@ -65,12 +65,15 @@ The application uses zero external JavaScript libraries. Everything runs in the 
 
 1. Open `index.html` in a web browser, or serve it using a local web server
 2. Complete the initial setup:
+   - **Optional**: Select a big surah from the preset dropdown (auto-fills fields)
    - Choose your unit type (page, verse, hizb, or juz)
-   - Set total units to memorize
+   - **For pages**: Set start page number (default: 1)
+   - Set total units to memorize (label changes by unit type)
    - Select a start date
    - Optionally name your progression
    - Choose language and theme preferences
 3. Start using the app - tasks will appear automatically based on your schedule
+4. **When online**: Click the book icon on page tasks to read the Quran text
 
 For detailed instructions, see the [User Guide](docs/USER_GUIDE.md).
 
@@ -85,6 +88,11 @@ For detailed instructions, see the [User Guide](docs/USER_GUIDE.md).
 - Offline functionality via service worker
 - Data export/import for backup and transfer
 - Progressive Web App - can be installed on devices
+- **Start page selection** - Choose starting page for page-based memorization
+- **Dynamic unit labels** - Labels change based on selected unit type
+- **Big surahs preset** - Quick setup for memorizing large surahs (>3 pages)
+- **Online reading** - View Quran text directly in the app (when online)
+- **Quran API integration** - Automatic surah metadata fetching and caching
 
 ## Documentation
 

@@ -17,6 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;700&display=swap" rel="stylesheet">
     
     <!-- Stylesheets -->
     <link rel="stylesheet" href="css/themes.css">
@@ -37,6 +38,13 @@
                     <p class="card-description" data-i18n="setup.title">Set up your memorization plan</p>
                     
                     <form id="setup-form">
+                        <div class="form-group">
+                            <label for="surah-preset" data-i18n="setup.surahPreset">Big Surahs Preset (Optional)</label>
+                            <select id="surah-preset" class="input">
+                                <option value="" data-i18n="setup.surahPresetNone">None</option>
+                            </select>
+                        </div>
+                        
                         <div class="setup-toggles">
                             <div class="setup-toggle-group">
                                 <div class="toggle-options" id="unit-type-toggle" role="group" aria-label="Unit Type">
@@ -62,8 +70,13 @@
                             </div>
                         </div>
                         
+                        <div class="form-group" id="start-page-group" style="display: none;">
+                            <label for="start-page" data-i18n="setup.startPage">Start Page Number</label>
+                            <input type="number" id="start-page" class="input" min="1" max="604" value="1">
+                        </div>
+                        
                         <div class="form-group">
-                            <label for="total-units" data-i18n="setup.totalUnits">Total Units</label>
+                            <label for="total-units" id="total-units-label" data-i18n="setup.totalUnits">Total Units</label>
                             <div class="number-input-group">
                                 <button type="button" class="number-input-btn" id="total-units-decrease" aria-label="Decrease">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -343,6 +356,7 @@
     <script src="js/utils/svg.js"></script>
     <script src="js/utils/debounce.js"></script>
     <script src="js/storage.js"></script>
+    <script src="js/quran-api.js"></script>
     <script src="js/algorithm.js"></script>
     <script src="js/i18n.js"></script>
     <script src="js/theme.js"></script>

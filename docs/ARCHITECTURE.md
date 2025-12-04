@@ -27,11 +27,13 @@ The application is organized into modular JavaScript files, each with a specific
   - `saveItem()` / `getAllItems()` - Memorization item CRUD operations
   - `markReviewComplete()` / `isReviewCompleted()` - Review tracking
   - `exportData()` / `importData()` - Data backup/restore
+  - `saveSurahMetadata()` / `getSurahMetadata()` - Quran metadata caching
 - **Storage Keys**:
-  - `quran_memorization_config` - User settings and preferences
+  - `quran_memorization_config` - User settings and preferences (includes `start_page`)
   - `quran_memorization_items` - All memorization items
   - `quran_memorization_current_view` - Last viewed screen
   - `quran_memorization_install_prompt_shown` - PWA install prompt state
+  - `quran_surah_metadata` - Cached surah metadata from API
 
 #### `algorithm.js` - Spaced Repetition Logic
 - **Purpose**: Implements the 7-station review algorithm
@@ -67,13 +69,25 @@ The application is organized into modular JavaScript files, each with a specific
   - `setTheme()` - Apply theme and save to config
   - `toggle()` - Switch between light/dark
 
+#### `quran-api.js` - Quran API Integration
+- **Purpose**: Handles all interactions with alquran.cloud API
+- **Key Functions**:
+  - `fetchSurahMetadata()` - Get surah metadata (with caching)
+  - `getBigSurahs()` - Filter surahs with more than 3 pages
+  - `getSurahByNumber()` - Get specific surah data
+  - `fetchPageText()` - Get Quran text for reading modal
+  - `getSurahPageCount()` / `getSurahStartPage()` - Helper functions
+  - `getSurahName()` - Get surah name in specified language
+- **Caching**: Metadata cached in localStorage after first fetch
+
 #### `components.js` - UI Component Factory
 - **Purpose**: Creates reusable UI components
 - **Key Components**:
-  - `createTaskCard()` - Task item with checkbox and priority badge
+  - `createTaskCard()` - Task item with checkbox, read icon, and priority badge
   - `createProgressTimelineItem()` - Progress view timeline entry
   - `createQuickStats()` - Today's task statistics
   - `createStationIndicator()` - Visual station progress indicator
+  - `showReadingModal()` - Modal displaying Quran text with verse separators
 
 #### `ui.js` - View Management and Rendering
 - **Purpose**: Controls view switching and rendering logic
@@ -82,13 +96,20 @@ The application is organized into modular JavaScript files, each with a specific
   - Tab navigation handling
   - Form initialization and submission
   - Task list rendering
+  - Surah preset dropdown management
+  - Dynamic unit label updates
+  - Start page field visibility control
 - **Views Managed**:
-  - `setup-view` - Initial configuration
-  - `today-view` - Daily task list
+  - `setup-view` - Initial configuration (with surah preset, start page)
+  - `today-view` - Daily task list (always shows today on reload)
   - `progress-view` - Timeline of all items
   - `calendar-view` - Calendar with task indicators
   - `settings-view` - App configuration
   - `credits-view` - Algorithm information
+- **Key Functions**:
+  - `loadSurahPresets()` - Populate big surahs dropdown
+  - `updateUnitTypeDependentFields()` - Update labels and show/hide start page
+  - `initSurahPresetHandler()` - Handle surah preset selection
 
 #### `calendar.js` - Calendar Component
 - **Purpose**: Calendar view with task visualization
@@ -108,8 +129,16 @@ The application is organized into modular JavaScript files, each with a specific
   - Delete confirmation (single item or all)
   - Import/export confirmations
   - Reset confirmation
-  - Add memorization modal
+  - Add memorization modal (with surah preset, start page support)
   - PWA install prompt
+
+#### `utils/svg.js` - SVG Icon Utilities
+- **Purpose**: Safe SVG icon creation
+- **Key Functions**:
+  - `createCheckboxChecked()` / `createCheckboxUnchecked()` - Checkbox icons
+  - `createSunIcon()` / `createMoonIcon()` - Theme toggle icons
+  - `createMinusIcon()` / `createPlusIcon()` - Number input icons
+  - `createBookIcon()` - Reading icon for task cards
 
 #### `app.js` - Application Bootstrap
 - **Purpose**: Application initialization and coordination
@@ -125,16 +154,17 @@ The application is organized into modular JavaScript files, each with a specific
 
 ```
 1. app.js loads
-2. Storage.getConfig() - Check for existing configuration
-3. If config exists:
+2. QuranAPI.fetchSurahMetadata() - Fetch/cache surah metadata in background
+3. Storage.getConfig() - Check for existing configuration
+4. If config exists:
    - i18n.init(config.language)
    - Theme.init()
    - UI.initTabNavigation()
    - UI.showView(savedView)
    - UI.renderTodayView() or appropriate view renderer
-4. If no config:
+5. If no config:
    - Show setup-view
-   - UI.renderSetupView()
+   - UI.renderSetupView() - Loads surah presets into dropdown
 ```
 
 ### Daily Schedule Generation
@@ -219,6 +249,7 @@ const taskCard = Components.createTaskCard(item, stationNumber, priority);
   unit_type: 'page' | 'verse' | 'hizb' | 'juz',
   total_units: number,           // Total units to memorize
   start_date: 'YYYY-MM-DD',      // Start date string
+  start_page: number,            // Start page number (only for page unit type, default: 1)
   progression_name: string,      // User-defined name
   language: 'en' | 'ar',
   theme: 'light' | 'dark',

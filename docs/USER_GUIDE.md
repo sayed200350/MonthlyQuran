@@ -21,22 +21,34 @@ This guide will help you get started with Monthly Quran and make the most of its
 
 When you first open the application, you'll see the setup screen. Here's what you need to configure:
 
-1. **Unit Type**: Choose how you want to track your memorization
+1. **Big Surahs Preset (Optional)**: Quick setup for memorizing large surahs
+   - Select a surah from the dropdown (only surahs with more than 3 pages are shown)
+   - Automatically fills: unit type (page), start page, total pages, and progression name
+   - You can still modify these fields after selection
+
+2. **Unit Type**: Choose how you want to track your memorization
    - **Page**: Track by page (most common)
    - **Ayah**: Track by verse
    - **Hizb**: Track by hizb (1/60th of Quran)
    - **Juz**: Track by juz (1/30th of Quran)
 
-2. **Total Units**: Enter how many units you plan to memorize
+3. **Start Page Number** (only visible when "Page" is selected): Choose which page to start from
+   - Default: Page 1
+   - Range: 1-604 (total pages in the Quran)
+   - Useful if you want to start from a specific page
+
+4. **Total Units**: Enter how many units you plan to memorize
+   - The label changes based on unit type: "Total Pages", "Total Verses", "Total Hizbs", or "Total Juzs"
    - Example: If memorizing 30 pages, enter `30`
 
-3. **Start Date**: Select when you want to begin memorization
+5. **Start Date**: Select when you want to begin memorization
    - This determines when your first unit is scheduled
    - Each day after start date, one new unit is scheduled
 
-4. **Progression Name**: Give your memorization plan a name
+6. **Progression Name**: Give your memorization plan a name
    - Example: "Juz 1", "Surah Al-Baqarah", "First 30 Pages"
    - This helps if you track multiple progressions
+   - Automatically filled when using Big Surahs Preset
 
 5. **Language**: Choose your preferred interface language
    - **EN**: English (left-to-right)
@@ -105,6 +117,7 @@ Each task is displayed as a card showing:
 - **Content Reference**: The unit name (e.g., "Page 5")
 - **Station Number**: Which review station this is
 - **Priority Badge**: Visual indicator of task priority
+- **Read Icon** (when online and unit type is "page"): Click to view the Quran text for that page
 - **Checkbox**: Mark task as complete
 
 ### Completing Tasks
@@ -112,6 +125,15 @@ Each task is displayed as a card showing:
 1. Click the checkbox on a task card to mark it complete
 2. The card will show a checkmark and gray out
 3. Click again to unmark if you made a mistake
+
+### Reading Quran Text
+
+When you're online and tracking by pages:
+- Click the **book icon** on any task card to open a reading modal
+- The modal displays the Quran text for that page
+- Each verse (ayah) is shown separately with its number
+- Text uses the Scheherazade New font for proper Arabic rendering
+- The modal can be closed by clicking the close button or clicking outside
 
 ### Task Sorting
 
@@ -160,7 +182,13 @@ The 7 circles show your progress:
 ### Adding New Progressions
 
 1. Tap the **+** button in the Progress view header
-2. Fill in the form (same as initial setup)
+2. Fill in the form (same as initial setup):
+   - **Big Surahs Preset**: Optional quick setup for large surahs
+   - **Unit Type**: Choose page, verse, hizb, or juz
+   - **Start Page**: Only visible for pages (optional)
+   - **Total Units**: Number of units (label changes by type)
+   - **Start Date**: When to begin
+   - **Progression Name**: Name for this progression
 3. The new progression will be added to your timeline
 
 ### Deleting Items

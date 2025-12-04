@@ -4,7 +4,8 @@ const STORAGE_KEYS = {
   CONFIG: 'quran_memorization_config',
   ITEMS: 'quran_memorization_items',
   CURRENT_VIEW: 'quran_memorization_current_view',
-  INSTALL_PROMPT_SHOWN: 'quran_memorization_install_prompt_shown'
+  INSTALL_PROMPT_SHOWN: 'quran_memorization_install_prompt_shown',
+  SURAH_METADATA: 'quran_surah_metadata'
 };
 
 // User Configuration Management
@@ -25,6 +26,7 @@ const Storage = {
         theme: config.theme || DEFAULT_CONFIG.THEME,
         morning_hour: config.morning_hour !== undefined ? config.morning_hour : DEFAULT_CONFIG.MORNING_HOUR,
         evening_hour: config.evening_hour !== undefined ? config.evening_hour : DEFAULT_CONFIG.EVENING_HOUR,
+        start_page: config.start_page !== undefined ? config.start_page : 1,
         updated_at: new Date().toISOString() // Keep ISO for timestamp, not date comparison
       };
       localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(configData));
@@ -362,6 +364,29 @@ const Storage = {
     } catch (error) {
       Logger.error('Error marking install prompt as shown:', error);
       return false;
+    }
+  },
+
+  // Save surah metadata
+  saveSurahMetadata(metadata) {
+    try {
+      localStorage.setItem(STORAGE_KEYS.SURAH_METADATA, JSON.stringify(metadata));
+      return true;
+    } catch (error) {
+      Logger.error('Error saving surah metadata:', error);
+      return false;
+    }
+  },
+
+  // Get surah metadata
+  getSurahMetadata() {
+    try {
+      const metadataStr = localStorage.getItem(STORAGE_KEYS.SURAH_METADATA);
+      if (!metadataStr) return null;
+      return JSON.parse(metadataStr);
+    } catch (error) {
+      Logger.error('Error getting surah metadata:', error);
+      return null;
     }
   }
 };

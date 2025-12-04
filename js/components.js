@@ -180,7 +180,38 @@ const Components = {
       }
     });
     
+    // Add checkbox first
     actions.appendChild(checkbox);
+    
+    // Read icon button (if online and unit type is page) - placed on opposite side from checkbox
+    if (navigator.onLine && typeof Storage !== 'undefined') {
+      const config = Storage.getConfig();
+      if (config && config.unit_type === 'page') {
+        // Extract page number from content_reference
+        const pageMatch = item.content_reference.match(/\d+/);
+        if (pageMatch) {
+          const pageNumber = parseInt(pageMatch[0]);
+          const readIconBtn = document.createElement('button');
+          readIconBtn.type = 'button';
+          readIconBtn.className = 'btn-icon';
+          readIconBtn.setAttribute('aria-label', i18n.t('today.readText'));
+          readIconBtn.style.cssText = 'margin-left: 0.5rem;';
+          readIconBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            Components.showReadingModal(pageNumber, 'page');
+          });
+          
+          // Add book icon
+          const bookIcon = SVGUtils.createBookIcon();
+          bookIcon.style.cssText = 'width: 1.25rem; height: 1.25rem;';
+          readIconBtn.appendChild(bookIcon);
+          
+          // Insert before checkbox (so it appears on the left in LTR, right in RTL)
+          actions.insertBefore(readIconBtn, checkbox);
+        }
+      }
+    }
     content.appendChild(actions);
     card.appendChild(content);
     
@@ -413,6 +444,164 @@ const Components = {
     badge.className = `badge badge-${variant}`;
     badge.textContent = text;
     return badge;
+  },
+  
+  // Show reading modal
+  async showReadingModal(unitNumber, unitType = 'page') {
+    const overlay = document.createElement('div');
+    overlay.className = 'dialog-overlay';
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      overflow-y: auto;
+    `;
+
+    const dialog = document.createElement('div');
+    dialog.className = 'dialog';
+    dialog.style.cssText = `
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      max-width: 90%;
+      max-height: 90vh;
+      width: 100%;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      overflow-y: auto;
+    `;
+
+    const title = document.createElement('h3');
+    title.className = 'dialog-title';
+    title.style.cssText = 'font-size: 1.25rem; font-weight: 600; margin: 0 0 1rem 0; color: var(--fg);';
+    title.textContent = i18n.t('reading.title');
+    dialog.appendChild(title);
+
+    const content = document.createElement('div');
+    content.id = 'reading-content';
+    content.style.cssText = `
+      font-family: 'Scheherazade New', 'IBM Plex Sans Arabic', serif;
+      font-size: 1.5rem;
+      line-height: 2.5;
+      text-align: right;
+      direction: rtl;
+      color: var(--fg);
+      margin: 1rem 0;
+      min-height: 100px;
+    `;
+    const loadingText = document.createElement('div');
+    loadingText.textContent = i18n.t('reading.loading');
+    content.appendChild(loadingText);
+    dialog.appendChild(content);
+
+    const buttons = document.createElement('div');
+    buttons.style.cssText = 'display: flex; justify-content: flex-end; margin-top: 1.5rem;';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'btn btn-ghost';
+    closeBtn.textContent = i18n.t('reading.close');
+    closeBtn.addEventListener('click', () => {
+      overlay.remove();
+    });
+    buttons.appendChild(closeBtn);
+
+    dialog.appendChild(buttons);
+    overlay.appendChild(dialog);
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        overlay.remove();
+      }
+    });
+
+    document.body.appendChild(overlay);
+    closeBtn.focus();
+
+    // Fetch text
+    try {
+      let textData = null;
+      if (unitType === 'page') {
+        textData = await QuranAPI.fetchPageText(unitNumber);
+      }
+      
+      if (textData && textData.data && textData.data.ayahs) {
+        const ayahs = textData.data.ayahs;
+        
+        // Clear loading text
+        content.innerHTML = '';
+        
+        // Create container for ayahs
+        ayahs.forEach((ayah, index) => {
+          // Create ayah container
+          const ayahContainer = document.createElement('div');
+          ayahContainer.style.cssText = `
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+          `;
+          
+          // Create ayah number badge
+          const ayahNumber = document.createElement('span');
+          ayahNumber.style.cssText = `
+            display: inline-block;
+            background-color: var(--muted-bg);
+            color: var(--muted-fg);
+            font-size: 0.875rem;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 50%;
+            margin-left: 0.5rem;
+            min-width: 2rem;
+            text-align: center;
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+          `;
+          ayahNumber.textContent = ayah.numberInSurah || (index + 1);
+          ayahContainer.appendChild(ayahNumber);
+          
+          // Create ayah text
+          const ayahText = document.createElement('span');
+          ayahText.style.cssText = `
+            font-family: 'Scheherazade New', 'IBM Plex Sans Arabic', serif;
+            font-size: 1.5rem;
+            line-height: 2.5;
+          `;
+          ayahText.textContent = ayah.text;
+          ayahContainer.appendChild(ayahText);
+          
+          content.appendChild(ayahContainer);
+        });
+        
+        // Remove border from last ayah
+        if (ayahs.length > 0) {
+          const lastAyah = content.lastElementChild;
+          if (lastAyah) {
+            lastAyah.style.borderBottom = 'none';
+            lastAyah.style.marginBottom = '0';
+            lastAyah.style.paddingBottom = '0';
+          }
+        }
+      } else {
+        content.innerHTML = '';
+        const errorText = document.createElement('div');
+        errorText.textContent = i18n.t('reading.error');
+        content.appendChild(errorText);
+      }
+    } catch (error) {
+      Logger.error('Error fetching reading text:', error);
+      content.innerHTML = '';
+      const errorText = document.createElement('div');
+      errorText.textContent = i18n.t('reading.error');
+      content.appendChild(errorText);
+    }
   }
 };
 

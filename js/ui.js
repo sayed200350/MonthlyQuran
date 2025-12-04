@@ -95,7 +95,9 @@ const UI = {
           // Render the view if needed
           if (viewId === 'today-view') {
             // Always show today's tasks when clicking the today tab
-            this.renderTodayView(new Date());
+            const today = new Date();
+            this.currentDate = today;
+            this.renderTodayView(today);
           } else if (viewId === 'progress-view') {
             this.renderProgressView();
           } else if (viewId === 'calendar-view') {
@@ -130,7 +132,7 @@ const UI = {
   },
 
   // Render setup view
-  renderSetupView() {
+  async renderSetupView() {
     const config = Storage.getConfig();
     
     // Ensure theme is initialized
@@ -140,6 +142,9 @@ const UI = {
     
     const currentTheme = Theme.getTheme();
     const currentLang = i18n.getLanguage();
+    
+    // Load surah presets
+    await this.loadSurahPresets();
     
     // Initialize unit type toggle
     const unitTypeToggle = DOMCache.getElementById('unit-type-toggle');
@@ -184,11 +189,14 @@ const UI = {
     const totalUnitsInput = DOMCache.getElementById('total-units');
     const startDateInput = DOMCache.getElementById('start-date');
     const progressionNameInput = DOMCache.getElementById('progression-name');
+    const startPageInput = DOMCache.getElementById('start-page');
+    const startPageGroup = DOMCache.getElementById('start-page-group');
     
     if (config) {
       if (totalUnitsInput) totalUnitsInput.value = config.total_units || DEFAULT_CONFIG.TOTAL_UNITS;
       if (startDateInput) startDateInput.value = config.start_date || '';
       if (progressionNameInput) progressionNameInput.value = config.progression_name || '';
+      if (startPageInput) startPageInput.value = config.start_page || 1;
     } else {
       // Set default start date to today (using local date)
       if (startDateInput && !startDateInput.value) {
@@ -198,13 +206,22 @@ const UI = {
       if (totalUnitsInput && !totalUnitsInput.value) {
         totalUnitsInput.value = DEFAULT_CONFIG.TOTAL_UNITS;
       }
+      if (startPageInput && !startPageInput.value) {
+        startPageInput.value = 1;
+      }
     }
+    
+    // Update unit count label and start page visibility
+    this.updateUnitTypeDependentFields();
     
     // Initialize toggle event listeners
     this.initSetupToggles();
     
     // Initialize number input buttons
     this.initNumberInput();
+    
+    // Initialize surah preset handler
+    this.initSurahPresetHandler();
   },
   
     // Initialize number input increment/decrement buttons
@@ -232,6 +249,127 @@ const UI = {
       }
     },
   
+  // Load surah presets into dropdown
+  async loadSurahPresets() {
+    const presetSelect = DOMCache.getElementById('surah-preset');
+    if (!presetSelect) {
+      Logger.warn('Surah preset select element not found');
+      return;
+    }
+    
+    // Clear existing options except "None"
+    while (presetSelect.children.length > 1) {
+      presetSelect.removeChild(presetSelect.lastChild);
+    }
+    
+    try {
+      const bigSurahs = await QuranAPI.getBigSurahs();
+      const currentLang = i18n.getLanguage();
+      
+      if (!bigSurahs || bigSurahs.length === 0) {
+        Logger.warn('No big surahs found. This might be due to API response format or network issues.');
+        // Optionally show a message to user
+        return;
+      }
+      
+      bigSurahs.forEach(surah => {
+        if (!surah || !surah.number) {
+          Logger.warn('Invalid surah object:', surah);
+          return;
+        }
+        
+        const option = document.createElement('option');
+        option.value = surah.number;
+        const pageCount = QuranAPI.getSurahPageCount(surah);
+        const surahName = QuranAPI.getSurahName(surah, currentLang);
+        option.textContent = `${surah.number}. ${surahName} (${pageCount} ${i18n.t('units.page')})`;
+        option.dataset.surahData = JSON.stringify(surah);
+        presetSelect.appendChild(option);
+      });
+      
+      Logger.info(`Loaded ${bigSurahs.length} big surahs into dropdown`);
+    } catch (error) {
+      Logger.error('Error loading surah presets:', error);
+    }
+  },
+  
+  // Update unit type dependent fields (label and start page visibility)
+  updateUnitTypeDependentFields() {
+    const unitTypeToggle = DOMCache.getElementById('unit-type-toggle');
+    const totalUnitsLabel = DOMCache.getElementById('total-units-label');
+    const startPageGroup = DOMCache.getElementById('start-page-group');
+    
+    if (!unitTypeToggle || !totalUnitsLabel) return;
+    
+    const selectedUnitType = unitTypeToggle.querySelector('.toggle-option.active')?.getAttribute('data-value') || DEFAULT_CONFIG.UNIT_TYPE;
+    
+    // Update label
+    let labelKey = 'setup.totalUnits';
+    if (selectedUnitType === 'page') labelKey = 'setup.totalPages';
+    else if (selectedUnitType === 'verse') labelKey = 'setup.totalVerses';
+    else if (selectedUnitType === 'hizb') labelKey = 'setup.totalHizbs';
+    else if (selectedUnitType === 'juz') labelKey = 'setup.totalJuzs';
+    
+    totalUnitsLabel.setAttribute('data-i18n', labelKey);
+    totalUnitsLabel.textContent = i18n.t(labelKey);
+    
+    // Show/hide start page field
+    if (startPageGroup) {
+      if (selectedUnitType === 'page') {
+        startPageGroup.style.display = 'block';
+      } else {
+        startPageGroup.style.display = 'none';
+      }
+    }
+  },
+  
+  // Initialize surah preset handler
+  initSurahPresetHandler() {
+    const presetSelect = DOMCache.getElementById('surah-preset');
+    if (!presetSelect) return;
+    
+    presetSelect.addEventListener('change', async (e) => {
+      const selectedValue = e.target.value;
+      if (!selectedValue) return;
+      
+      const option = e.target.querySelector(`option[value="${selectedValue}"]`);
+      if (!option || !option.dataset.surahData) return;
+      
+      try {
+        const surah = JSON.parse(option.dataset.surahData);
+        const startPage = QuranAPI.getSurahStartPage(surah);
+        const pageCount = QuranAPI.getSurahPageCount(surah);
+        const currentLang = i18n.getLanguage();
+        const surahName = QuranAPI.getSurahName(surah, currentLang);
+        
+        // Set unit type to page
+        const unitTypeToggle = DOMCache.getElementById('unit-type-toggle');
+        if (unitTypeToggle) {
+          unitTypeToggle.querySelectorAll('.toggle-option').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.getAttribute('data-value') === 'page') {
+              btn.classList.add('active');
+            }
+          });
+        }
+        
+        // Update fields
+        const totalUnitsInput = DOMCache.getElementById('total-units');
+        const startPageInput = DOMCache.getElementById('start-page');
+        const progressionNameInput = DOMCache.getElementById('progression-name');
+        
+        if (totalUnitsInput) totalUnitsInput.value = pageCount;
+        if (startPageInput) startPageInput.value = startPage;
+        if (progressionNameInput) progressionNameInput.value = surahName;
+        
+        // Update dependent fields
+        this.updateUnitTypeDependentFields();
+      } catch (error) {
+        Logger.error('Error handling surah preset:', error);
+      }
+    });
+  },
+  
   // Initialize setup toggle event listeners
   initSetupToggles() {
     // Unit type toggle
@@ -242,6 +380,8 @@ const UI = {
           const value = btn.getAttribute('data-value');
           unitTypeToggle.querySelectorAll('.toggle-option').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
+          // Update dependent fields
+          this.updateUnitTypeDependentFields();
         });
       });
     }
@@ -300,7 +440,12 @@ const UI = {
   // Create or update an item, returning the item
   createOrUpdateItem(unitType, itemNumber, itemDateStr, config, allItems) {
     const stableId = this.generateItemId(unitType, itemNumber, itemDateStr);
-    const contentRef = Algorithm.formatContentReference(unitType, itemNumber);
+    // Calculate actual unit number with start page offset for pages
+    let actualUnitNumber = itemNumber;
+    if (unitType === 'page' && config && config.start_page) {
+      actualUnitNumber = config.start_page + itemNumber - 1;
+    }
+    const contentRef = Algorithm.formatContentReference(unitType, actualUnitNumber);
     const existingItem = this.findExistingItem(allItems, unitType, itemNumber, itemDateStr, stableId);
     
     if (!existingItem) {
@@ -442,7 +587,11 @@ const UI = {
       return;
     }
 
-    const date = targetDate || this.currentDate || new Date();
+    // If no target date specified, use today
+    // This ensures that when the today tab is clicked or page is reloaded,
+    // it always shows today's tasks
+    const today = new Date();
+    const date = targetDate !== null && targetDate !== undefined ? targetDate : today;
     this.currentDate = date;
     const dateStr = DateUtils.getLocalDateString(date);
     
@@ -450,9 +599,9 @@ const UI = {
     this.updateNavbarLabel(date);
     
     // Determine if this is a selected date (not real-time today)
-    const today = DateUtils.normalizeDate(new Date());
+    const normalizedToday = DateUtils.normalizeDate(new Date());
     const target = DateUtils.normalizeDate(date);
-    const isSelectedDate = targetDate !== null || target.getTime() !== today.getTime();
+    const isSelectedDate = targetDate !== null || target.getTime() !== normalizedToday.getTime();
 
     // Clean up any duplicate items before processing
     this.cleanupDuplicateItems(config);
@@ -786,6 +935,11 @@ const UI = {
         const language = languageToggle?.querySelector('.toggle-option.active')?.getAttribute('data-value') || DEFAULT_CONFIG.LANGUAGE;
         const theme = themeToggle?.querySelector('.toggle-option.active')?.getAttribute('data-value') || DEFAULT_CONFIG.THEME;
         
+        const startPageInput = document.getElementById('start-page');
+        const startPage = (unitType === 'page' && startPageInput) 
+          ? parseInt(startPageInput.value) || 1 
+          : 1;
+        
         const config = {
           unit_type: unitType,
           total_units: parseInt(document.getElementById('total-units').value) || 30,
@@ -794,7 +948,8 @@ const UI = {
           language: language,
           theme: theme,
           morning_hour: DEFAULT_CONFIG.MORNING_HOUR,
-          evening_hour: DEFAULT_CONFIG.EVENING_HOUR
+          evening_hour: DEFAULT_CONFIG.EVENING_HOUR,
+          start_page: startPage
         };
         
         Storage.saveConfig(config);
@@ -915,7 +1070,7 @@ const UI = {
     if (progressAddBtn) {
       progressAddBtn.addEventListener('click', () => {
         Dialog.showAddMemorizationModal((data) => {
-          const { unitType, totalUnits, startDate, progressionName } = data;
+          const { unitType, totalUnits, startDate, progressionName, startPage } = data;
           const config = Storage.getConfig();
           
           if (config) {
@@ -925,6 +1080,7 @@ const UI = {
             config.total_units = totalUnits;
             config.start_date = startDate;
             config.progression_name = progressionName;
+            config.start_page = startPage || 1;
             Storage.saveConfig(config);
             
             // Create all items upfront so they appear in progress view

@@ -116,13 +116,18 @@ MonthlyQuran/
 ├── js/
 │   ├── app.js             # Application entry point
 │   ├── storage.js         # Data persistence layer
+│   ├── quran-api.js       # Quran API integration
 │   ├── algorithm.js       # Spaced repetition algorithm
 │   ├── i18n.js            # Internationalization
 │   ├── theme.js           # Theme management
 │   ├── components.js      # UI component factory
 │   ├── ui.js              # View management and rendering
 │   ├── calendar.js        # Calendar component
-│   └── dialog.js          # Modal dialogs
+│   ├── dialog.js          # Modal dialogs
+│   └── utils/
+│       ├── logger.js      # Logging utility
+│       ├── svg.js         # SVG icon creation
+│       └── debounce.js    # Debounce utility
 └── docs/
     └── *.md               # Documentation files
 ```
@@ -131,29 +136,39 @@ MonthlyQuran/
 
 Scripts are loaded in this order (in `index.html`):
 
-1. `storage.js` - No dependencies
-2. `algorithm.js` - Uses DateUtils (internal)
-3. `i18n.js` - No dependencies
-4. `theme.js` - Uses Storage
-5. `dialog.js` - Uses i18n
-6. `components.js` - Uses Storage, Algorithm, i18n
-7. `calendar.js` - Uses Storage, Algorithm, i18n
-8. `ui.js` - Uses all above modules
-9. `app.js` - Uses all above modules
+1. `constants.js` - Application constants
+2. `utils/logger.js` - Logging utility
+3. `utils/svg.js` - SVG icon utilities
+4. `utils/debounce.js` - Debounce utility
+5. `storage.js` - No dependencies
+6. `quran-api.js` - Uses Storage, Logger
+7. `algorithm.js` - Uses DateUtils (internal)
+8. `i18n.js` - No dependencies
+9. `theme.js` - Uses Storage
+10. `dialog.js` - Uses i18n, SVGUtils
+11. `components.js` - Uses Storage, Algorithm, i18n, SVGUtils, QuranAPI
+12. `calendar.js` - Uses Storage, Algorithm, i18n
+13. `ui.js` - Uses all above modules
+14. `app.js` - Uses all above modules
 
 **Important**: Maintain this order when adding new scripts.
 
 ### Module Dependencies
 
 ```
+constants.js     (no dependencies)
+utils/logger.js  (no dependencies)
+utils/svg.js     (no dependencies)
+utils/debounce.js (no dependencies)
 storage.js       (no dependencies)
+quran-api.js     → storage.js, logger.js
 algorithm.js     (no dependencies, exposes DateUtils)
 i18n.js          (no dependencies)
 theme.js         → storage.js
-dialog.js        → i18n.js
-components.js    → storage.js, algorithm.js, i18n.js
+dialog.js        → i18n.js, SVGUtils
+components.js    → storage.js, algorithm.js, i18n.js, SVGUtils, QuranAPI
 calendar.js      → storage.js, algorithm.js, i18n.js
-ui.js            → storage.js, algorithm.js, i18n.js, theme.js, components.js, calendar.js
+ui.js            → storage.js, algorithm.js, i18n.js, theme.js, components.js, calendar.js, QuranAPI
 app.js           → all modules
 ```
 
@@ -301,6 +316,7 @@ UI.initEventListeners = function() {
 - `SVGUtils.createMoonIcon()`: Create moon icon
 - `SVGUtils.createMinusIcon()`: Create minus icon
 - `SVGUtils.createPlusIcon()`: Create plus icon
+- `SVGUtils.createBookIcon()`: Create book/read icon for task cards
 
 ### DOMCache (`js/ui.js`)
 - `DOMCache.getElementById(id)`: Get element by ID (cached)

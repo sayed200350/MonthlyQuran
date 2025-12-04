@@ -101,6 +101,17 @@ const SVGUtils = {
       { tag: 'line', attrs: { x1: '12', y1: '5', x2: '12', y2: '19' } },
       { tag: 'line', attrs: { x1: '5', y1: '12', x2: '19', y2: '12' } }
     ]);
+  },
+  
+  /**
+   * Create book/read icon
+   * @returns {SVGElement} SVG element
+   */
+  createBookIcon() {
+    return this.createSVG('0 0 24 24', [
+      { tag: 'path', attrs: { d: 'M4 19.5A2.5 2.5 0 0 1 6.5 17H20' } },
+      { tag: 'path', attrs: { d: 'M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z' } }
+    ]);
   }
 };
 
