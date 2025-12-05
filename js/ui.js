@@ -673,14 +673,31 @@ const UI = {
       });
     });
     
-    // Mark tasks as completed or not
+    // Deduplicate tasks: same item.id + station combination should only appear once
+    // Use Map with composite key to track unique tasks
+    const uniqueTasksMap = new Map();
     allTasks.forEach(task => {
+      const station = task.station || STATIONS.STATION_1;
+      const taskKey = `${task.item.id}-${station}-${dateStr}`;
+      
+      // If we haven't seen this task before, or if this one has lower priority number (higher priority), keep it
+      const existing = uniqueTasksMap.get(taskKey);
+      if (!existing || task.priority < existing.priority) {
+        uniqueTasksMap.set(taskKey, task);
+      }
+    });
+    
+    // Convert back to array
+    const uniqueTasks = Array.from(uniqueTasksMap.values());
+    
+    // Mark tasks as completed or not
+    uniqueTasks.forEach(task => {
       const station = task.station || STATIONS.STATION_1;
       task.isCompleted = Storage.isReviewCompleted(task.item.id, station, dateStr);
     });
     
     // Sort: unchecked first (by priority, then content), then checked (by priority, then content)
-    allTasks.sort((a, b) => {
+    uniqueTasks.sort((a, b) => {
       // First, separate completed and uncompleted
       if (a.isCompleted !== b.isCompleted) {
         return a.isCompleted ? 1 : -1; // Uncompleted first (false comes before true)
@@ -696,10 +713,10 @@ const UI = {
     // Render quick stats
     const statsContainer = DOMCache.getElementById('today-stats');
     if (statsContainer) {
-      const total = allTasks.length;
+      const total = uniqueTasks.length;
       // Count completed in single loop instead of filter
       let completed = 0;
-      for (const task of allTasks) {
+      for (const task of uniqueTasks) {
         if (task.isCompleted) completed++;
       }
       
@@ -714,20 +731,22 @@ const UI = {
     // Render unified task list
     const tasksContainer = DOMCache.getElementById('today-tasks');
     if (tasksContainer) {
+      // Clear container first to prevent duplicates
+      tasksContainer.innerHTML = '';
+      
       // Use DocumentFragment for batch DOM updates
       const fragment = document.createDocumentFragment();
       
-      if (allTasks.length === 0) {
+      if (uniqueTasks.length === 0) {
         const empty = Components.createEmptyState(i18n.t('dashboard.noItems'));
         fragment.appendChild(empty);
       } else {
-        allTasks.forEach(({ item, priority, station }) => {
+        uniqueTasks.forEach(({ item, priority, station }) => {
           const taskCard = Components.createTaskCard(item, station, priority);
           fragment.appendChild(taskCard);
         });
       }
       
-      tasksContainer.innerHTML = '';
       tasksContainer.appendChild(fragment);
     }
   },

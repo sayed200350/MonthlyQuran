@@ -146,9 +146,9 @@ const translations = {
       algorithmTitle: 'About the Algorithm',
       algorithmDescription: 'This application implements the 7-Station Spaced Repetition Algorithm for Quran memorization, developed by Dr. Wafaa Orabi. The algorithm is based on scientific principles of memory retention, specifically the Forgetting Curve discovered by Hermann Ebbinghaus. Instead of mass repetition (cramming), the system uses spaced repetition at calculated intervals to move content from short-term to long-term memory through 7 review stations over approximately one month.',
       methodologyTitle: 'The Methodology',
-      methodologyDescription: 'The methodology recognizes that forgetting is a biological inevitability, not a personal failure. The solution is Spaced Repetition (Distributed Practice), where material is reviewed at specific intervals. Each review "resets" the forgetting curve just as it begins to dip, forcing the brain to reconstruct neural pathways. This process is like building a brick wall: you lay a layer, let the mortar dry (time gap), then build the next layer, creating a solid structure (Long-Term Memory).',
-      contactTitle: 'Contact',
-      telegramLink: 'Visit Telegram Channel'
+      methodologyDescription: 'The algorithm relies on reviewing the Quran through seven stations over approximately one month. Each station represents a calculated timing for repetition to enhance permanent memorization: repeating the text several hours after the initial memorization, then reviews after days and weeks. This transfers information from short-term to long-term memory, utilizing the forgetting curve and effective repetitive learning techniques.',
+      contactTitle: 'Rights',
+      telegramLink: 'To visit Dr. Wafaa Orabi\'s Telegram channel'
     },
     installPrompt: {
       title: 'Install App',
@@ -308,9 +308,9 @@ const translations = {
       algorithmTitle: 'عن الخوارزمية',
       algorithmDescription: 'يُطبق هذا التطبيق خوارزمية المراجعة المتتابعة ذات المحطات السبع لحفظ القرآن الكريم، التي طورتها د. وفاء عرابي. تعتمد الخوارزمية على المبادئ العلمية للاحتفاظ بالذاكرة، وتحديداً منحنى النسيان الذي اكتشفه هيرمان إبنجهاوس. بدلاً من التكرار الجماعي (الحشو)، يستخدم النظام المراجعة المتتابعة على فترات محسوبة لنقل المحتوى من الذاكرة قصيرة المدى إلى الذاكرة طويلة المدى من خلال 7 محطات مراجعة على مدار شهر تقريباً.',
       methodologyTitle: 'المنهجية',
-      methodologyDescription: 'تعترف المنهجية بأن النسيان حتمية بيولوجية وليس فشلاً شخصياً. الحل هو المراجعة المتتابعة (الممارسة الموزعة)، حيث يتم مراجعة المادة على فترات محددة. كل مراجعة "تعيد ضبط" منحنى النسيان تماماً عندما يبدأ في الانحدار، مما يجبر الدماغ على إعادة بناء المسارات العصبية. هذه العملية تشبه بناء جدار من الطوب: تضع طبقة، وتترك الملاط يجف (فجوة زمنية)، ثم تبني الطبقة التالية، مما يخلق بنية صلبة (الذاكرة طويلة المدى).',
-      contactTitle: 'الاتصال',
-      telegramLink: 'زيارة قناة التلجرام'
+      methodologyDescription: 'تعتمد الخوارزمية على مراجعة القرآن عبر سبع محطات خلال حوالي شهر. كل محطة تمثل توقيتاً مدروساً لتكرار المراجعة بهدف تعزيز الحفظ الدائم: تكرار النص بعد عدة ساعات من الحفظ الأولي، ثم مراجعات بعد أيام وأسابيع. بذلك يتم نقل المعلومات من الذاكرة قصيرة المدى إلى طويلة المدى، عبر الاستفادة من منحنى النسيان وتقنيات التعلم التكراري الفعال.',
+      contactTitle: 'الحقوق',
+      telegramLink: 'للزيارة قناة التلجرام للدكتورة وفاء عرابي'
     },
     installPrompt: {
       title: 'تثبيت التطبيق',
