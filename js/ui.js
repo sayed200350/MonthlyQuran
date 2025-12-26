@@ -66,69 +66,90 @@ const UI = {
 
   // Show a specific view
   showView(viewId) {
-    const views = DOMCache.querySelectorAll('.view', false); // Don't cache views as they change
-    views.forEach(view => view.classList.add('hidden'));
+    try {
+      // Get all views - don't use cache here to be safe
+      const views = document.querySelectorAll('.view');
+      if (views.length > 0) {
+        // Use a standard for loop for better compatibility
+        for (let i = 0; i < views.length; i++) {
+          views[i].classList.add('hidden');
+        }
+      }
 
-    const targetView = DOMCache.getElementById(viewId);
-    if (targetView) {
-      targetView.classList.remove('hidden');
-    }
+      const targetView = document.getElementById(viewId);
+      if (targetView) {
+        targetView.classList.remove('hidden');
 
-    // Update tab active state
-    this.updateTabActiveState(viewId);
+        // Ensure the screen scrolls back to top during view switch
+        window.scrollTo(0, 0);
+      } else {
+        Logger.error(`View not found: ${viewId}`);
+      }
 
-    // Save current view to localStorage (skip setup-view)
-    if (viewId !== 'setup-view') {
-      Storage.saveCurrentView(viewId);
+      // Update tab active state
+      this.updateTabActiveState(viewId);
+
+      // Save current view to localStorage (skip setup-view and privacy-view)
+      if (viewId !== 'setup-view' && viewId !== 'privacy-view') {
+        Storage.saveCurrentView(viewId);
+      }
+    } catch (error) {
+      if (typeof Logger !== 'undefined') {
+        Logger.error('Error in showView:', error);
+      } else {
+        console.error('Error in showView:', error);
+      }
     }
   },
 
   // Initialize tab navigation
   initTabNavigation() {
-    const tabs = DOMCache.querySelectorAll('.nav-tab');
-    tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        const viewId = tab.getAttribute('data-view');
-        if (viewId) {
-          this.showView(viewId);
+    const bottomNav = document.getElementById('bottom-nav');
+    if (!bottomNav) return;
 
-          // Render the view if needed
-          if (viewId === 'today-view') {
-            // Always show today's tasks when clicking the today tab
-            const today = new Date();
-            this.currentDate = today;
-            this.renderTodayView(today);
-          } else if (viewId === 'progress-view') {
-            this.renderProgressView();
-          } else if (viewId === 'calendar-view') {
-            if (window.Calendar) {
-              Calendar.initAsView();
-            }
-          } else if (viewId === 'settings-view') {
-            this.renderSettingsView();
-          } else if (viewId === 'credits-view') {
-            // Credits view doesn't need special rendering
+    bottomNav.addEventListener('click', (e) => {
+      const tab = e.target.closest('.nav-tab');
+      if (!tab) return;
+
+      const viewId = tab.getAttribute('data-view');
+      if (viewId) {
+        this.showView(viewId);
+
+        // Render the view if needed
+        if (viewId === 'today-view') {
+          const today = new Date();
+          this.currentDate = today;
+          this.renderTodayView(today);
+        } else if (viewId === 'progress-view') {
+          this.renderProgressView();
+        } else if (viewId === 'calendar-view') {
+          if (window.Calendar) {
+            Calendar.initAsView();
           }
-          // Update navbar label when switching views
-          if (viewId === 'today-view') {
-            this.updateNavbarLabel();
-          }
+        } else if (viewId === 'settings-view') {
+          this.renderSettingsView();
         }
-      });
+
+        // Update navbar label when switching views
+        if (viewId === 'today-view') {
+          this.updateNavbarLabel();
+        }
+      }
     });
   },
 
   // Update tab active state
   updateTabActiveState(viewId) {
-    const tabs = DOMCache.querySelectorAll('.nav-tab');
-    tabs.forEach(tab => {
+    const tabs = document.querySelectorAll('.nav-tab');
+    for (let i = 0; i < tabs.length; i++) {
+      const tab = tabs[i];
       const tabViewId = tab.getAttribute('data-view');
       if (tabViewId === viewId) {
         tab.classList.add('active');
       } else {
         tab.classList.remove('active');
       }
-    });
+    }
   },
 
   // Render setup view
