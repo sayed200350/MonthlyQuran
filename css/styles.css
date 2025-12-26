@@ -57,6 +57,7 @@ body {
   z-index: 10;
   backdrop-filter: blur(8px);
   background-color: rgba(var(--card-bg), 0.8);
+  padding-top: env(safe-area-inset-top, 0);
 }
 
 .header-content {
@@ -157,6 +158,8 @@ body {
   align-items: center;
   justify-content: center;
   padding: 1rem;
+  padding-top: calc(1rem + env(safe-area-inset-top, 0));
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0));
 }
 
 #setup-view .container {
