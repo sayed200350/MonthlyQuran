@@ -202,7 +202,7 @@ const translations = {
       progress: 'التقدم',
       calendar: 'التقويم',
       settings: 'الإعدادات',
-      credits: 'حول الخوارزمية'
+      credits: 'الخوارزمية'
     },
     today: {
       stats: '{{total}} مهمة اليوم، {{completed}} مكتملة',
@@ -302,10 +302,10 @@ const translations = {
       markIncomplete: 'إلغاء التمييز'
     },
     credits: {
-      title: 'حول الخوارزمية',
+      title: 'الخوارزمية',
       name: 'د. وفاء عرابي',
       role: 'مبتكرة خوارزمية الحفظ',
-      algorithmTitle: 'عن الخوارزمية',
+      algorithmTitle: 'الخوارزمية',
       algorithmDescription: 'يُطبق هذا التطبيق خوارزمية المراجعة المتتابعة ذات المحطات السبع لحفظ القرآن الكريم، التي طورتها د. وفاء عرابي. تعتمد الخوارزمية على المبادئ العلمية للاحتفاظ بالذاكرة، وتحديداً منحنى النسيان الذي اكتشفه هيرمان إبنجهاوس. بدلاً من التكرار الجماعي (الحشو)، يستخدم النظام المراجعة المتتابعة على فترات محسوبة لنقل المحتوى من الذاكرة قصيرة المدى إلى الذاكرة طويلة المدى من خلال 7 محطات مراجعة على مدار شهر تقريباً.',
       methodologyTitle: 'المنهجية',
       methodologyDescription: 'تعتمد الخوارزمية على مراجعة القرآن عبر سبع محطات خلال حوالي شهر. كل محطة تمثل توقيتاً مدروساً لتكرار المراجعة بهدف تعزيز الحفظ الدائم: تكرار النص بعد عدة ساعات من الحفظ الأولي، ثم مراجعات بعد أيام وأسابيع. بذلك يتم نقل المعلومات من الذاكرة قصيرة المدى إلى طويلة المدى، عبر الاستفادة من منحنى النسيان وتقنيات التعلم التكراري الفعال.',
@@ -340,7 +340,7 @@ const i18n = {
   t(key, params = {}) {
     const keys = key.split('.');
     let value = translations[this.currentLanguage];
-    
+
     for (const k of keys) {
       if (value && typeof value === 'object') {
         value = value[k];
@@ -348,14 +348,14 @@ const i18n = {
         return key; // Return key if translation not found
       }
     }
-    
+
     if (typeof value === 'string') {
       // Simple parameter replacement
       return value.replace(/\{\{(\w+)\}\}/g, (match, paramKey) => {
         return params[paramKey] || match;
       });
     }
-    
+
     return value || key;
   },
 
@@ -393,7 +393,7 @@ const i18n = {
     elements.forEach(element => {
       const key = element.getAttribute('data-i18n');
       const translation = this.t(key);
-      
+
       if (element.tagName === 'INPUT' && element.type === 'submit') {
         element.value = translation;
       } else if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
@@ -402,7 +402,7 @@ const i18n = {
         element.textContent = translation;
       }
     });
-    
+
     // Translate aria-labels
     const ariaElements = document.querySelectorAll('[data-i18n-aria]');
     ariaElements.forEach(element => {
@@ -410,7 +410,7 @@ const i18n = {
       const translation = this.t(key);
       element.setAttribute('aria-label', translation);
     });
-    
+
     // Re-update navbar label if it's showing a day name (not "Today")
     if (window.UI && window.UI.updateNavbarLabel) {
       const navLabel = document.querySelector('#nav-today .nav-label');
