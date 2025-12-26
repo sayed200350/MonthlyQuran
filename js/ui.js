@@ -324,15 +324,34 @@ const UI = {
 
     const selectedUnitType = unitTypeToggle.querySelector('.toggle-option.active')?.getAttribute('data-value') || DEFAULT_CONFIG.UNIT_TYPE;
 
-    // Update label
+    // Update label and limits
     let labelKey = 'setup.totalUnits';
-    if (selectedUnitType === 'page') labelKey = 'setup.totalPages';
-    else if (selectedUnitType === 'verse') labelKey = 'setup.totalVerses';
-    else if (selectedUnitType === 'hizb') labelKey = 'setup.totalHizbs';
-    else if (selectedUnitType === 'juz') labelKey = 'setup.totalJuzs';
+    let maxUnits = 604;
+
+    if (selectedUnitType === 'page') {
+      labelKey = 'setup.totalPages';
+      maxUnits = 604;
+    } else if (selectedUnitType === 'verse') {
+      labelKey = 'setup.totalVerses';
+      maxUnits = 6349;
+    } else if (selectedUnitType === 'hizb') {
+      labelKey = 'setup.totalHizbs';
+      maxUnits = 60;
+    } else if (selectedUnitType === 'juz') {
+      labelKey = 'setup.totalJuzs';
+      maxUnits = 30;
+    }
 
     totalUnitsLabel.setAttribute('data-i18n', labelKey);
     totalUnitsLabel.textContent = i18n.t(labelKey);
+
+    const totalUnitsInput = DOMCache.getElementById('total-units');
+    if (totalUnitsInput) {
+      totalUnitsInput.max = maxUnits;
+      if (parseInt(totalUnitsInput.value) > maxUnits) {
+        totalUnitsInput.value = maxUnits;
+      }
+    }
 
     // Show/hide start page field
     if (startPageGroup) {
@@ -806,9 +825,115 @@ const UI = {
     // Ensure all planned items exist
     this.createAllPlannedItems(config);
 
-    const allItems = Storage.getActiveItems();
+    let allItems = Storage.getActiveItems();
     const timelineContainer = DOMCache.getElementById('progress-timeline');
     if (!timelineContainer) return;
+
+    // --- Progression Filter Logic ---
+    // 1. Get unique progression names
+    const progressionNames = [...new Set(allItems.map(i => i.progression_name || 'Default'))].sort();
+
+    // Only show filter if we have specific filter UI container (or inject it)
+    // For now, we'll assume we can inject a filter bar at the top of timelineContainer if needed
+    // But ideally, index.html should have a slot. We will prepend it to timelineContainer.
+
+    // Check if filter bar exists or create it
+    let filterBar = document.getElementById('progression-filter-bar');
+    if (!filterBar) {
+      filterBar = document.createElement('div');
+      filterBar.id = 'progression-filter-bar';
+      filterBar.style.cssText = 'padding: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; border-bottom: 1px solid var(--border-color); margin-bottom: 1rem;';
+      // Insert before timeline content
+      timelineContainer.parentNode.insertBefore(filterBar, timelineContainer);
+    }
+
+    filterBar.innerHTML = '';
+
+    // Select Dropdown
+    const select = document.createElement('select');
+    select.className = 'input';
+    select.style.flex = '1';
+
+    const allOption = document.createElement('option');
+    allOption.value = 'ALL';
+    allOption.textContent = i18n.t('progress.allProgressions');
+    select.appendChild(allOption);
+
+    progressionNames.forEach(name => {
+      const option = document.createElement('option');
+      option.value = name;
+      option.textContent = name;
+      select.appendChild(option);
+    });
+
+    // Check if we have a saved filter preference
+    const savedFilter = localStorage.getItem('progression_filter') || 'ALL';
+    select.value = savedFilter;
+
+    select.addEventListener('change', (e) => {
+      localStorage.setItem('progression_filter', e.target.value);
+      this.renderProgressView(); // re-render
+    });
+
+    filterBar.appendChild(select);
+
+    // Filter items
+    if (savedFilter !== 'ALL') {
+      allItems = allItems.filter(i => (i.progression_name || 'Default') === savedFilter);
+
+      // Add Edit Button only when a specific progression is selected
+      const editBtn = document.createElement('button');
+      editBtn.className = 'btn btn-outline btn-sm';
+      // Edit Icon
+      editBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>';
+      editBtn.setAttribute('aria-label', i18n.t('common.edit'));
+
+      editBtn.addEventListener('click', () => {
+        // Infer configuration from the first item of this progression
+        // We know they should share unit type, start date, etc. somewhat.
+        // But simplified: we use the MAIN config if it matches, otherwise we might guess?
+        // Current architecture: SINGLE main config but MULTIPLE items.
+        // If we have mixed progressions, 'config' object might not handle them all.
+        // NOTE: The app currently seems to support ONE active 'config' but multiple items in 'Storage'.
+        // If we edit a 'progression' that is NOT the active main config, we might overwrite main config?
+        // Assumption: Users want to edit the active parameters that generated these items.
+        // We will pass the global config if it matches names, or try to reconstruct.
+
+        // Reconstruct from items if needed, but for now use global config as base
+        // and override with progression-specifics if we can find them.
+        const progressionItems = allItems;
+        let firstItem = progressionItems[0];
+
+        // Try to find if this progression matches current global config
+        let targetConfig = { ...config };
+        if (config.progression_name !== savedFilter) {
+          // We are editing a "legacy" or "other" progression
+          // We need to guess its parameters.
+          // This is tricky. Let's assume Unit Type from content ref check?
+          // Actually, `createOrUpdateItem` uses config.unit_type.
+          // If we don't store unit_type on item, we can't easily know.
+          // BUT, we can make the user choose.
+          targetConfig.progression_name = savedFilter;
+          // Guess start date from oldest item
+          const oldest = progressionItems.reduce((a, b) => a.date_memorized < b.date_memorized ? a : b);
+          targetConfig.start_date = oldest.date_memorized;
+          targetConfig.total_units = progressionItems.length; // Approximate
+        }
+
+        Dialog.showEditProgressionModal(targetConfig, (newData) => {
+          // CONFIRMATION ALERT with MIGRATION logic
+          Dialog.showShadcnAlert(
+            i18n.t('progress.saveChanges'),
+            i18n.t('progress.migrationWarning'),
+            () => {
+              this.migrateProgression(savedFilter, newData);
+            },
+            () => { } // Cancel does nothing
+          );
+        });
+      });
+      filterBar.appendChild(editBtn);
+    }
 
     // Use DocumentFragment for batch DOM updates
     const fragment = document.createDocumentFragment();
@@ -1215,8 +1340,70 @@ const UI = {
   },
 
   // Legacy method for backward compatibility
-  updateLanguageToggle() {
+  updateLanguageToggle: function () {
     this.updateLanguageToggles();
+  },
+
+  // Migrate Progression
+  migrateProgression: function (oldName, newData) {
+    try {
+      var allItems = Storage.getAllItems();
+      var oldItems = allItems.filter(function (i) { return (i.progression_name || 'Default') === oldName; }).sort(function (a, b) { return new Date(a.date_memorized) - new Date(b.date_memorized); });
+
+      var startDate = DateUtils.normalizeDate(newData.start_date);
+      var newItems = [];
+
+      for (var i = 0; i < newData.total_units; i++) {
+        var itemDate = new Date(startDate);
+        itemDate.setDate(itemDate.getDate() + i);
+        var itemDateStr = DateUtils.getLocalDateString(itemDate);
+        var itemNumber = i + 1;
+
+        var stableId = this.generateItemId(newData.unit_type, itemNumber, itemDateStr);
+
+        var actualUnitNumber = itemNumber;
+        if (newData.unit_type === 'page' && newData.start_page) {
+          actualUnitNumber = newData.start_page + itemNumber - 1;
+        }
+        var contentRef = Algorithm.formatContentReference(newData.unit_type, actualUnitNumber);
+
+        var newItem = {
+          id: stableId,
+          content_reference: contentRef,
+          date_memorized: itemDateStr,
+          status: ITEM_STATUS.ACTIVE,
+          progression_name: newData.progression_name,
+          reviews_completed: [],
+          reviews_missed: []
+        };
+
+        if (i < oldItems.length) {
+          var oldItem = oldItems[i];
+          newItem.reviews_completed = (oldItem.reviews_completed || []).slice();
+          newItem.reviews_missed = (oldItem.reviews_missed || []).slice();
+        }
+
+        newItems.push(newItem);
+      }
+
+      oldItems.forEach(function (item) { Storage.deleteItem(item.id); });
+      newItems.forEach(function (item) { Storage.saveItem(item); });
+
+      var currentConfig = Storage.getConfig();
+      if (currentConfig && (currentConfig.progression_name || 'Default') === oldName) {
+        var mergedConfig = {};
+        for (var key in currentConfig) { mergedConfig[key] = currentConfig[key]; }
+        for (var key in newData) { mergedConfig[key] = newData[key]; }
+        Storage.saveConfig(mergedConfig);
+      }
+
+      localStorage.setItem('progression_filter', newData.progression_name);
+      this.renderProgressView();
+      Dialog.showShadcnAlert(i18n.t('common.success'), i18n.t('progress.updateSuccess'), null, null, i18n.t('common.ok'), '', 'default');
+
+    } catch (e) {
+      Logger.error('Migration failed', e);
+      Dialog.showShadcnAlert(i18n.t('common.error'), i18n.t('progress.updateError') + ': ' + e.message, null, null, i18n.t('common.ok'), '', 'destructive');
+    }
   }
 };
-

@@ -54,7 +54,13 @@ const translations = {
       nextReview: 'Next review: {{date}}',
       currentStation: 'Station {{station}}',
       addNew: 'Add New',
-      deleteItem: 'Delete Item'
+      deleteItem: 'Delete Item',
+      allProgressions: 'All Progressions',
+      editProgression: 'Edit Progression',
+      saveChanges: 'Save Changes?',
+      migrationWarning: 'This will update the progression settings. Existing progress will be migrated where possible.',
+      updateSuccess: 'Progression updated successfully.',
+      updateError: 'Update failed'
     },
     settings: {
       title: 'Settings',
@@ -97,7 +103,10 @@ const translations = {
         4: 'Thu',
         5: 'Fri',
         6: 'Sat'
-      }
+      },
+      newTaskCount: '{{count}} new memorization(s)',
+      yesterdayTaskCount: '{{count}} yesterday review(s)',
+      spacedTaskCount: '{{count}} spaced review(s)'
     },
     stations: {
       1: 'Station 1 (Morning)',
@@ -127,6 +136,11 @@ const translations = {
       deleteAllConfirm: 'Are you sure you want to delete ALL items? This cannot be undone.',
       cancel: 'Cancel',
       confirm: 'Confirm',
+      save: 'Save',
+      edit: 'Edit',
+      ok: 'OK',
+      success: 'Success',
+      error: 'Error',
       exportConfirm: 'Export will download all your data as a JSON file.',
       importConfirm: 'Importing will overwrite all current data. Are you sure?',
       resetConfirm: 'Are you sure you want to reset the application? This will delete all your data and cannot be undone.'
@@ -229,7 +243,13 @@ const translations = {
       nextReview: 'المراجعة القادمة: {{date}}',
       currentStation: 'المحطة {{station}}',
       addNew: 'إضافة جديد',
-      deleteItem: 'حذف العنصر'
+      deleteItem: 'حذف العنصر',
+      allProgressions: 'جميع التقدمات',
+      editProgression: 'تعديل التقدم',
+      saveChanges: 'حفظ التغييرات؟',
+      migrationWarning: 'سيؤدي هذا إلى تحديث إعدادات التقدم. سيتم نقل التقدم الحالي حيثما أمكن ذلك.',
+      updateSuccess: 'تم تحديث التقدم بنجاح.',
+      updateError: 'فشل التحديث'
     },
     settings: {
       title: 'الإعدادات',
@@ -272,7 +292,10 @@ const translations = {
         4: 'خميس',
         5: 'جمعة',
         6: 'سبت'
-      }
+      },
+      newTaskCount: '{{count}} حفظ جديد',
+      yesterdayTaskCount: '{{count}} مراجعة الأمس',
+      spacedTaskCount: '{{count}} مراجعة متتابعة'
     },
     stations: {
       1: 'المحطة 1 (الصباح)',
@@ -302,6 +325,11 @@ const translations = {
       deleteAllConfirm: 'هل أنت متأكد من حذف جميع العناصر؟ لا يمكن التراجع عن هذا الإجراء.',
       cancel: 'إلغاء',
       confirm: 'تأكيد',
+      save: 'حفظ',
+      edit: 'تعديل',
+      ok: 'حسناً',
+      success: 'تم بنجاح',
+      error: 'خطأ',
       exportConfirm: 'سيقوم التصدير بتنزيل جميع بياناتك كملف JSON.',
       importConfirm: 'سيؤدي الاستيراد إلى استبدال جميع البيانات الحالية. هل أنت متأكد؟',
       resetConfirm: 'هل أنت متأكد من إعادة تعيين التطبيق؟ سيؤدي هذا إلى حذف جميع بياناتك ولا يمكن التراجع عنه.'

@@ -307,7 +307,7 @@ const Dialog = {
     surahPresetLabel.setAttribute('for', 'add-memorization-surah-preset');
     surahPresetLabel.textContent = i18n.t('setup.surahPreset');
     surahPresetGroup.appendChild(surahPresetLabel);
-    
+
     const surahPresetSelect = document.createElement('select');
     surahPresetSelect.id = 'add-memorization-surah-preset';
     surahPresetSelect.className = 'input';
@@ -315,7 +315,7 @@ const Dialog = {
     noneOption.value = '';
     noneOption.textContent = i18n.t('setup.surahPresetNone');
     surahPresetSelect.appendChild(noneOption);
-    
+
     // Load big surahs
     const bigSurahs = await QuranAPI.getBigSurahs();
     const currentLang = i18n.getLanguage();
@@ -384,20 +384,39 @@ const Dialog = {
     totalUnitsLabel.id = 'add-memorization-total-units-label';
     totalUnitsLabel.textContent = i18n.t('setup.totalUnits');
     totalUnitsGroup.appendChild(totalUnitsLabel);
-    
+
     // Function to update unit type dependent fields
     const updateUnitTypeDependentFields = () => {
       const selectedUnitType = unitTypeToggle.querySelector('.toggle-option.active')?.getAttribute('data-value') || 'page';
-      
-      // Update label
+
+      // Update label and limits
       let labelKey = 'setup.totalUnits';
-      if (selectedUnitType === 'page') labelKey = 'setup.totalPages';
-      else if (selectedUnitType === 'verse') labelKey = 'setup.totalVerses';
-      else if (selectedUnitType === 'hizb') labelKey = 'setup.totalHizbs';
-      else if (selectedUnitType === 'juz') labelKey = 'setup.totalJuzs';
-      
+      let maxUnits = 604;
+
+      if (selectedUnitType === 'page') {
+        labelKey = 'setup.totalPages';
+        maxUnits = 604;
+      } else if (selectedUnitType === 'verse') {
+        labelKey = 'setup.totalVerses';
+        maxUnits = 6349;
+      } else if (selectedUnitType === 'hizb') {
+        labelKey = 'setup.totalHizbs';
+        maxUnits = 60;
+      } else if (selectedUnitType === 'juz') {
+        labelKey = 'setup.totalJuzs';
+        maxUnits = 30;
+      }
+
       totalUnitsLabel.textContent = i18n.t(labelKey);
-      
+
+      // Update max attribute and validate current value
+      if (totalUnitsInput) {
+        totalUnitsInput.max = maxUnits;
+        if (parseInt(totalUnitsInput.value) > maxUnits) {
+          totalUnitsInput.value = maxUnits;
+        }
+      }
+
       // Show/hide start page field
       if (selectedUnitType === 'page') {
         startPageGroup.style.display = 'block';
@@ -506,16 +525,16 @@ const Dialog = {
     surahPresetSelect.addEventListener('change', (e) => {
       const selectedValue = e.target.value;
       if (!selectedValue) return;
-      
+
       const option = e.target.querySelector(`option[value="${selectedValue}"]`);
       if (!option || !option.dataset.surahData) return;
-      
+
       try {
         const surah = JSON.parse(option.dataset.surahData);
         const startPage = QuranAPI.getSurahStartPage(surah);
         const pageCount = QuranAPI.getSurahPageCount(surah);
         const surahName = QuranAPI.getSurahName(surah, currentLang);
-        
+
         // Set unit type to page
         unitTypeToggle.querySelectorAll('.toggle-option').forEach(btn => {
           btn.classList.remove('active');
@@ -523,12 +542,12 @@ const Dialog = {
             btn.classList.add('active');
           }
         });
-        
+
         // Update fields
         totalUnitsInput.value = pageCount;
         startPageInput.value = startPage;
         progressionNameInput.value = surahName;
-        
+
         // Update dependent fields
         updateUnitTypeDependentFields();
       } catch (error) {
@@ -544,7 +563,7 @@ const Dialog = {
       const startDate = startDateInput.value;
       const progressionName = progressionNameInput.value || '';
       const startPage = (unitType === 'page') ? parseInt(startPageInput.value) || 1 : 1;
-      
+
       overlay.remove();
       if (onSubmit) onSubmit({ unitType, totalUnits, startDate, progressionName, startPage });
     });
@@ -570,8 +589,8 @@ const Dialog = {
     }
 
     // Check if already installed
-    if (window.matchMedia('(display-mode: standalone)').matches || 
-        window.navigator.standalone === true) {
+    if (window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true) {
       return;
     }
 
@@ -588,7 +607,7 @@ const Dialog = {
     // Content wrapper
     const content = document.createElement('div');
     content.style.cssText = 'flex: 1; min-width: 0;';
-    
+
     const title = document.createElement('div');
     title.style.cssText = 'font-size: 0.875rem; font-weight: 600; color: var(--fg); margin-bottom: 0.25rem;';
     title.textContent = i18n.t('installPrompt.title');
@@ -671,7 +690,7 @@ const Dialog = {
     if (!window._installPromptUpdateTranslations) {
       window._installPromptUpdateTranslations = updateTranslations;
       const originalSetLanguage = i18n.setLanguage;
-      i18n.setLanguage = function(language) {
+      i18n.setLanguage = function (language) {
         const result = originalSetLanguage.call(this, language);
         if (window._installPromptUpdateTranslations) {
           window._installPromptUpdateTranslations();
@@ -679,6 +698,223 @@ const Dialog = {
         return result;
       };
     }
+  },
+
+  // Show Shadcn Alert
+  showShadcnAlert: function (titleText, messageText, onConfirm, onCancel, confirmText, cancelText, variant) {
+    if (!confirmText) confirmText = i18n.t('common.confirm');
+    if (!cancelText) cancelText = i18n.t('common.cancel');
+    if (!variant) variant = 'default';
+    var overlay = document.createElement('div');
+    overlay.className = 'dialog-overlay';
+    overlay.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); z-index: 2100; display: flex; align-items: center; justify-content: center; padding: 1rem;';
+
+    var dialog = document.createElement('div');
+    dialog.className = 'dialog alert-dialog';
+    dialog.style.cssText = 'background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 1.5rem; max-width: 32rem; width: 100%; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);';
+
+    var title = document.createElement('h3');
+    title.className = 'dialog-title';
+    title.style.cssText = 'font-size: 1.125rem; font-weight: 600; margin: 0 0 0.5rem 0; color: var(--fg);';
+    title.textContent = titleText;
+    dialog.appendChild(title);
+
+    var message = document.createElement('div');
+    message.className = 'dialog-message';
+    message.style.cssText = 'font-size: 0.875rem; color: var(--muted-fg); margin-bottom: 1.5rem; line-height: 1.5;';
+    message.textContent = messageText;
+    dialog.appendChild(message);
+
+    var footer = document.createElement('div');
+    footer.className = 'dialog-footer';
+    footer.style.cssText = 'display: flex; justify-content: flex-end; gap: 0.75rem;';
+
+    var btnCancel = document.createElement('button');
+    btnCancel.className = 'btn btn-outline';
+    btnCancel.textContent = cancelText;
+    btnCancel.addEventListener('click', function () {
+      overlay.remove();
+      if (onCancel) onCancel();
+    });
+    footer.appendChild(btnCancel);
+
+    var btnConfirm = document.createElement('button');
+    btnConfirm.className = 'btn ' + (variant === 'destructive' ? 'btn-destructive' : 'btn-primary');
+    btnConfirm.textContent = confirmText;
+    btnConfirm.addEventListener('click', function () {
+      overlay.remove();
+      if (onConfirm) onConfirm();
+    });
+    footer.appendChild(btnConfirm);
+
+    dialog.appendChild(footer);
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+    btnConfirm.focus();
+  },
+
+  // Show Edit Progression Modal
+  // Show Edit Progression Modal
+  showEditProgressionModal: function (currentConfig, onSubmit) {
+    var overlay = document.createElement('div');
+    overlay.className = 'dialog-overlay';
+    overlay.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 1rem; overflow-y: auto;';
+
+    var dialog = document.createElement('div');
+    dialog.className = 'dialog';
+    dialog.style.cssText = 'background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 1.5rem; max-width: 28rem; width: 100%; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);';
+
+    var title = document.createElement('h3');
+    title.className = 'card-title';
+    title.style.cssText = 'font-size: 1.5rem; font-weight: 600; margin: 0 0 0.5rem 0;';
+    title.textContent = i18n.t('progress.editProgression', 'Edit Progression');
+    dialog.appendChild(title);
+
+    var form = document.createElement('form');
+    form.style.cssText = 'margin-top: 1.5rem;';
+
+    var unitTypeGroup = document.createElement('div');
+    unitTypeGroup.className = 'form-group';
+    var unitTypeLabel = document.createElement('label');
+    unitTypeLabel.textContent = i18n.t('setup.unitType');
+    unitTypeGroup.appendChild(unitTypeLabel);
+
+    var unitTypeToggle = document.createElement('div');
+    unitTypeToggle.className = 'toggle-options';
+    var units = ['page', 'verse', 'hizb', 'juz'];
+    for (var i = 0; i < units.length; i++) {
+      (function (unit) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'toggle-option';
+        if (unit === (currentConfig.unit_type || 'page')) btn.classList.add('active');
+        btn.setAttribute('data-value', unit);
+        btn.textContent = i18n.t('units.' + unit);
+        btn.addEventListener('click', function () {
+          var options = unitTypeToggle.querySelectorAll('.toggle-option');
+          for (var j = 0; j < options.length; j++) { options[j].classList.remove('active'); }
+          btn.classList.add('active');
+          updateFields();
+        });
+        unitTypeToggle.appendChild(btn);
+      })(units[i]);
+    }
+    unitTypeGroup.appendChild(unitTypeToggle);
+    form.appendChild(unitTypeGroup);
+
+    var totalUnitsGroup = document.createElement('div');
+    totalUnitsGroup.className = 'form-group';
+    var totalUnitsLabel = document.createElement('label');
+    totalUnitsLabel.textContent = i18n.t('setup.totalUnits');
+    totalUnitsGroup.appendChild(totalUnitsLabel);
+
+    var totalUnitsInput = document.createElement('input');
+    totalUnitsInput.type = 'number';
+    totalUnitsInput.className = 'input';
+    totalUnitsInput.min = '1';
+    totalUnitsInput.value = currentConfig.total_units || 30;
+    totalUnitsInput.required = true;
+    totalUnitsGroup.appendChild(totalUnitsInput);
+    form.appendChild(totalUnitsGroup);
+
+    var nameGroup = document.createElement('div');
+    nameGroup.className = 'form-group';
+    var nameLabel = document.createElement('label');
+    nameLabel.textContent = i18n.t('setup.progressionName');
+    nameGroup.appendChild(nameLabel);
+
+    var nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.className = 'input';
+    nameInput.value = currentConfig.progression_name || '';
+    nameInput.required = true;
+    nameGroup.appendChild(nameInput);
+    form.appendChild(nameGroup);
+
+    var dateGroup = document.createElement('div');
+    dateGroup.className = 'form-group';
+    var dateLabel = document.createElement('label');
+    dateLabel.textContent = i18n.t('setup.startDate');
+    dateGroup.appendChild(dateLabel);
+
+    var dateInput = document.createElement('input');
+    dateInput.type = 'date';
+    dateInput.className = 'input';
+    dateInput.value = currentConfig.start_date || '';
+    dateInput.required = true;
+    dateInput.style.cssText = 'display: block; width: 100%;';
+    dateGroup.appendChild(dateInput);
+    form.appendChild(dateGroup);
+
+    var startPageGroup = document.createElement('div');
+    startPageGroup.className = 'form-group';
+    startPageGroup.style.display = 'none';
+    var startPageLabel = document.createElement('label');
+    startPageLabel.textContent = i18n.t('setup.startPage');
+    startPageGroup.appendChild(startPageLabel);
+
+    var startPageInput = document.createElement('input');
+    startPageInput.type = 'number';
+    startPageInput.className = 'input';
+    startPageInput.min = '1';
+    startPageInput.max = '604';
+    startPageInput.value = currentConfig.start_page || 1;
+    startPageGroup.appendChild(startPageInput);
+    form.appendChild(startPageGroup);
+
+    var updateFields = function () {
+      var activeOpt = unitTypeToggle.querySelector('.active');
+      var type = activeOpt ? activeOpt.getAttribute('data-value') : 'page';
+      var labelKey = 'setup.totalUnits';
+      var maxUnits = 604;
+      if (type === 'page') { labelKey = 'setup.totalPages'; maxUnits = 604; }
+      else if (type === 'verse') { labelKey = 'setup.totalVerses'; maxUnits = 6349; }
+      else if (type === 'hizb') { labelKey = 'setup.totalHizbs'; maxUnits = 60; }
+      else if (type === 'juz') { labelKey = 'setup.totalJuzs'; maxUnits = 30; }
+      totalUnitsLabel.textContent = i18n.t(labelKey);
+      totalUnitsInput.max = maxUnits;
+      if (parseInt(totalUnitsInput.value) > maxUnits) totalUnitsInput.value = maxUnits;
+      startPageGroup.style.display = (type === 'page') ? 'block' : 'none';
+    };
+
+    updateFields();
+
+    var buttons = document.createElement('div');
+    buttons.style.cssText = 'display: flex; gap: 0.75rem; margin-top: 1.5rem; justify-content: flex-end;';
+
+    var cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'btn btn-ghost';
+    cancelBtn.textContent = i18n.t('common.cancel');
+    cancelBtn.addEventListener('click', function () { overlay.remove(); });
+    buttons.appendChild(cancelBtn);
+
+    var saveBtn = document.createElement('button');
+    saveBtn.type = 'submit';
+    saveBtn.className = 'btn btn-primary';
+    saveBtn.textContent = i18n.t('common.save', 'Save');
+    buttons.appendChild(saveBtn);
+
+    form.appendChild(buttons);
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var activeOpt = unitTypeToggle.querySelector('.active');
+      var type = activeOpt ? activeOpt.getAttribute('data-value') : 'page';
+      var newData = {};
+      for (var key in currentConfig) { newData[key] = currentConfig[key]; }
+      newData.unit_type = type;
+      newData.total_units = parseInt(totalUnitsInput.value);
+      newData.progression_name = nameInput.value;
+      newData.start_date = dateInput.value;
+      newData.start_page = type === 'page' ? parseInt(startPageInput.value) : 1;
+
+      overlay.remove();
+      if (onSubmit) onSubmit(newData);
+    });
+
+    dialog.appendChild(form);
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
   }
 };
-
