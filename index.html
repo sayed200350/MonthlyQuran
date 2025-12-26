@@ -249,6 +249,7 @@
                         </div>
                         
                         <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                            <button type="button" id="settings-privacy-btn" class="btn btn-outline btn-full" style="margin-bottom: 0.75rem;">Privacy Policy</button>
                             <button type="button" id="settings-export-btn" class="btn btn-outline btn-full" data-i18n="settings.exportData">Export Data</button>
                             <button type="button" id="settings-import-btn" class="btn btn-outline btn-full" data-i18n="settings.importData">Import Data</button>
                             <button type="button" id="settings-reset-btn" class="btn btn-destructive btn-full" data-i18n="settings.resetApp">Reset Application</button>
@@ -298,6 +299,59 @@
                                 <h3 data-i18n="credits.contactTitle">Contact</h3>
                                 <p class="credits-text">
                                     <a href="https://t.me/wafaa_oraby_coach?brid=ak3J5PSbaH3uyBc26nhbaw" target="_blank" rel="noopener noreferrer" class="credits-link" data-i18n="credits.telegramLink">Visit Telegram Channel</a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+        
+        <!-- Privacy Policy View -->
+        <div id="privacy-view" class="view hidden">
+            <header class="header">
+                <div class="header-content">
+                    <button id="privacy-back-btn" class="btn-icon">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 12H5M12 19l-7-7 7-7"/>
+                        </svg>
+                    </button>
+                    <h1 class="header-title">Privacy Policy</h1>
+                    <div style="width: 40px;"></div> <!-- Spacer -->
+                </div>
+            </header>
+            
+            <main class="main">
+                <div class="container">
+                    <div class="card">
+                        <div class="credits-content" style="text-align: left;">
+                            <h2 class="credits-name">Privacy Policy</h2>
+                            <p class="credits-role">Last updated: December 2025</p>
+                            
+                            <div class="credits-section">
+                                <h3>Data Storage</h3>
+                                <p class="credits-text">
+                                    This application is designed with an "Offline First" philosophy. 
+                                    All your memorization data, settings, and progress are stored exclusively 
+                                    on your device using LocalStorage/IndexedDB technologies.
+                                </p>
+                            </div>
+                            
+                            <div class="credits-section">
+                                <h3>Data Collection</h3>
+                                <p class="credits-text">
+                                    We do not collect, transmit, or store any of your personal data on external servers.
+                                    No analytics or tracking cookies are used within this application.
+                                </p>
+                            </div>
+                            
+                            <div class="credits-section">
+                                <h3>Internet Usage</h3>
+                                <p class="credits-text">
+                                    Internet connection is only used for:
+                                    <br>• Initial download of Quran metadata/text
+                                    <br>• Playing Quran audio recitations
+                                    <br>• Updating the application
                                 </p>
                             </div>
                         </div>

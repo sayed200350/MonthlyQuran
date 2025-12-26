@@ -3,7 +3,7 @@
 // DOM Cache for frequently accessed elements
 const DOMCache = {
   _cache: {},
-  
+
   /**
    * Get element by ID, using cache if available
    * @param {string} id - Element ID
@@ -15,7 +15,7 @@ const DOMCache = {
     }
     return this._cache[id];
   },
-  
+
   /**
    * Get elements by selector, using cache if available
    * @param {string} selector - CSS selector
@@ -33,7 +33,7 @@ const DOMCache = {
     }
     return elements;
   },
-  
+
   /**
    * Clear cache for a specific key or all cache
    * @param {string} key - Optional key to clear, or undefined to clear all
@@ -45,7 +45,7 @@ const DOMCache = {
       this._cache = {};
     }
   },
-  
+
   /**
    * Initialize cache with frequently accessed elements
    */
@@ -63,26 +63,26 @@ const DOMCache = {
 const UI = {
   // Current date context (defaults to today)
   currentDate: new Date(),
-  
+
   // Show a specific view
   showView(viewId) {
     const views = DOMCache.querySelectorAll('.view', false); // Don't cache views as they change
     views.forEach(view => view.classList.add('hidden'));
-    
+
     const targetView = DOMCache.getElementById(viewId);
     if (targetView) {
       targetView.classList.remove('hidden');
     }
-    
+
     // Update tab active state
     this.updateTabActiveState(viewId);
-    
+
     // Save current view to localStorage (skip setup-view)
     if (viewId !== 'setup-view') {
       Storage.saveCurrentView(viewId);
     }
   },
-  
+
   // Initialize tab navigation
   initTabNavigation() {
     const tabs = DOMCache.querySelectorAll('.nav-tab');
@@ -91,7 +91,7 @@ const UI = {
         const viewId = tab.getAttribute('data-view');
         if (viewId) {
           this.showView(viewId);
-          
+
           // Render the view if needed
           if (viewId === 'today-view') {
             // Always show today's tasks when clicking the today tab
@@ -117,7 +117,7 @@ const UI = {
       });
     });
   },
-  
+
   // Update tab active state
   updateTabActiveState(viewId) {
     const tabs = DOMCache.querySelectorAll('.nav-tab');
@@ -134,18 +134,18 @@ const UI = {
   // Render setup view
   async renderSetupView() {
     const config = Storage.getConfig();
-    
+
     // Ensure theme is initialized
     if (!Theme.getTheme()) {
       Theme.init();
     }
-    
+
     const currentTheme = Theme.getTheme();
     const currentLang = i18n.getLanguage();
-    
+
     // Load surah presets
     await this.loadSurahPresets();
-    
+
     // Initialize unit type toggle
     const unitTypeToggle = DOMCache.getElementById('unit-type-toggle');
     if (unitTypeToggle) {
@@ -158,7 +158,7 @@ const UI = {
         }
       });
     }
-    
+
     // Initialize language toggle
     const languageToggle = DOMCache.getElementById('setup-language-toggle');
     if (languageToggle) {
@@ -171,7 +171,7 @@ const UI = {
         }
       });
     }
-    
+
     // Initialize theme toggle
     const themeToggle = DOMCache.getElementById('setup-theme-toggle');
     if (themeToggle) {
@@ -184,14 +184,14 @@ const UI = {
         }
       });
     }
-    
+
     // Pre-fill other form fields
     const totalUnitsInput = DOMCache.getElementById('total-units');
     const startDateInput = DOMCache.getElementById('start-date');
     const progressionNameInput = DOMCache.getElementById('progression-name');
     const startPageInput = DOMCache.getElementById('start-page');
     const startPageGroup = DOMCache.getElementById('start-page-group');
-    
+
     if (config) {
       if (totalUnitsInput) totalUnitsInput.value = config.total_units || DEFAULT_CONFIG.TOTAL_UNITS;
       if (startDateInput) startDateInput.value = config.start_date || '';
@@ -210,45 +210,45 @@ const UI = {
         startPageInput.value = 1;
       }
     }
-    
+
     // Update unit count label and start page visibility
     this.updateUnitTypeDependentFields();
-    
+
     // Initialize toggle event listeners
     this.initSetupToggles();
-    
+
     // Initialize number input buttons
     this.initNumberInput();
-    
+
     // Initialize surah preset handler
     this.initSurahPresetHandler();
   },
-  
-    // Initialize number input increment/decrement buttons
-    initNumberInput() {
-      const decreaseBtn = DOMCache.getElementById('total-units-decrease');
-      const increaseBtn = DOMCache.getElementById('total-units-increase');
-      const input = DOMCache.getElementById('total-units');
-      
-      if (decreaseBtn && input) {
-        decreaseBtn.addEventListener('click', () => {
-          const currentValue = parseInt(input.value) || DEFAULT_CONFIG.TOTAL_UNITS;
-          const newValue = Math.max(1, currentValue - 1);
-          input.value = newValue;
-          input.dispatchEvent(new Event('change', { bubbles: true }));
-        });
-      }
-      
-      if (increaseBtn && input) {
-        increaseBtn.addEventListener('click', () => {
-          const currentValue = parseInt(input.value) || DEFAULT_CONFIG.TOTAL_UNITS;
-          const newValue = currentValue + 1;
-          input.value = newValue;
-          input.dispatchEvent(new Event('change', { bubbles: true }));
-        });
-      }
-    },
-  
+
+  // Initialize number input increment/decrement buttons
+  initNumberInput() {
+    const decreaseBtn = DOMCache.getElementById('total-units-decrease');
+    const increaseBtn = DOMCache.getElementById('total-units-increase');
+    const input = DOMCache.getElementById('total-units');
+
+    if (decreaseBtn && input) {
+      decreaseBtn.addEventListener('click', () => {
+        const currentValue = parseInt(input.value) || DEFAULT_CONFIG.TOTAL_UNITS;
+        const newValue = Math.max(1, currentValue - 1);
+        input.value = newValue;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+    }
+
+    if (increaseBtn && input) {
+      increaseBtn.addEventListener('click', () => {
+        const currentValue = parseInt(input.value) || DEFAULT_CONFIG.TOTAL_UNITS;
+        const newValue = currentValue + 1;
+        input.value = newValue;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+    }
+  },
+
   // Load surah presets into dropdown
   async loadSurahPresets() {
     const presetSelect = DOMCache.getElementById('surah-preset');
@@ -256,28 +256,28 @@ const UI = {
       Logger.warn('Surah preset select element not found');
       return;
     }
-    
+
     // Clear existing options except "None"
     while (presetSelect.children.length > 1) {
       presetSelect.removeChild(presetSelect.lastChild);
     }
-    
+
     try {
       const bigSurahs = await QuranAPI.getBigSurahs();
       const currentLang = i18n.getLanguage();
-      
+
       if (!bigSurahs || bigSurahs.length === 0) {
         Logger.warn('No big surahs found. This might be due to API response format or network issues.');
         // Optionally show a message to user
         return;
       }
-      
+
       bigSurahs.forEach(surah => {
         if (!surah || !surah.number) {
           Logger.warn('Invalid surah object:', surah);
           return;
         }
-        
+
         const option = document.createElement('option');
         option.value = surah.number;
         const pageCount = QuranAPI.getSurahPageCount(surah);
@@ -286,33 +286,33 @@ const UI = {
         option.dataset.surahData = JSON.stringify(surah);
         presetSelect.appendChild(option);
       });
-      
+
       Logger.info(`Loaded ${bigSurahs.length} big surahs into dropdown`);
     } catch (error) {
       Logger.error('Error loading surah presets:', error);
     }
   },
-  
+
   // Update unit type dependent fields (label and start page visibility)
   updateUnitTypeDependentFields() {
     const unitTypeToggle = DOMCache.getElementById('unit-type-toggle');
     const totalUnitsLabel = DOMCache.getElementById('total-units-label');
     const startPageGroup = DOMCache.getElementById('start-page-group');
-    
+
     if (!unitTypeToggle || !totalUnitsLabel) return;
-    
+
     const selectedUnitType = unitTypeToggle.querySelector('.toggle-option.active')?.getAttribute('data-value') || DEFAULT_CONFIG.UNIT_TYPE;
-    
+
     // Update label
     let labelKey = 'setup.totalUnits';
     if (selectedUnitType === 'page') labelKey = 'setup.totalPages';
     else if (selectedUnitType === 'verse') labelKey = 'setup.totalVerses';
     else if (selectedUnitType === 'hizb') labelKey = 'setup.totalHizbs';
     else if (selectedUnitType === 'juz') labelKey = 'setup.totalJuzs';
-    
+
     totalUnitsLabel.setAttribute('data-i18n', labelKey);
     totalUnitsLabel.textContent = i18n.t(labelKey);
-    
+
     // Show/hide start page field
     if (startPageGroup) {
       if (selectedUnitType === 'page') {
@@ -322,26 +322,26 @@ const UI = {
       }
     }
   },
-  
+
   // Initialize surah preset handler
   initSurahPresetHandler() {
     const presetSelect = DOMCache.getElementById('surah-preset');
     if (!presetSelect) return;
-    
+
     presetSelect.addEventListener('change', async (e) => {
       const selectedValue = e.target.value;
       if (!selectedValue) return;
-      
+
       const option = e.target.querySelector(`option[value="${selectedValue}"]`);
       if (!option || !option.dataset.surahData) return;
-      
+
       try {
         const surah = JSON.parse(option.dataset.surahData);
         const startPage = QuranAPI.getSurahStartPage(surah);
         const pageCount = QuranAPI.getSurahPageCount(surah);
         const currentLang = i18n.getLanguage();
         const surahName = QuranAPI.getSurahName(surah, currentLang);
-        
+
         // Set unit type to page
         const unitTypeToggle = DOMCache.getElementById('unit-type-toggle');
         if (unitTypeToggle) {
@@ -352,16 +352,16 @@ const UI = {
             }
           });
         }
-        
+
         // Update fields
         const totalUnitsInput = DOMCache.getElementById('total-units');
         const startPageInput = DOMCache.getElementById('start-page');
         const progressionNameInput = DOMCache.getElementById('progression-name');
-        
+
         if (totalUnitsInput) totalUnitsInput.value = pageCount;
         if (startPageInput) startPageInput.value = startPage;
         if (progressionNameInput) progressionNameInput.value = surahName;
-        
+
         // Update dependent fields
         this.updateUnitTypeDependentFields();
       } catch (error) {
@@ -369,7 +369,7 @@ const UI = {
       }
     });
   },
-  
+
   // Initialize setup toggle event listeners
   initSetupToggles() {
     // Unit type toggle
@@ -385,7 +385,7 @@ const UI = {
         });
       });
     }
-    
+
     // Language toggle - instant change
     const languageToggle = DOMCache.getElementById('setup-language-toggle');
     if (languageToggle) {
@@ -394,7 +394,7 @@ const UI = {
           const value = btn.getAttribute('data-value');
           languageToggle.querySelectorAll('.toggle-option').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
-          
+
           // Instant language change
           i18n.init(value);
           i18n.translatePage();
@@ -402,7 +402,7 @@ const UI = {
         });
       });
     }
-    
+
     // Theme toggle - instant change
     const themeToggle = DOMCache.getElementById('setup-theme-toggle');
     if (themeToggle) {
@@ -411,7 +411,7 @@ const UI = {
           const value = btn.getAttribute('data-value');
           themeToggle.querySelectorAll('.toggle-option').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
-          
+
           // Instant theme change
           Theme.setTheme(value);
         });
@@ -428,12 +428,12 @@ const UI = {
   // Find existing item by stable ID or legacy pattern
   findExistingItem(allItems, unitType, itemNumber, itemDateStr, stableId) {
     return allItems.find(
-      item => item.id === stableId || 
-              (item.date_memorized === itemDateStr && 
-               item.status === ITEM_STATUS.ACTIVE &&
-               // Check if it matches the pattern (for legacy items without stable IDs)
-               (item.id.startsWith(`item-${unitType}-${itemNumber}-`) || 
-                item.id.includes(`-${itemNumber}-${itemDateStr}`)))
+      item => item.id === stableId ||
+        (item.date_memorized === itemDateStr &&
+          item.status === ITEM_STATUS.ACTIVE &&
+          // Check if it matches the pattern (for legacy items without stable IDs)
+          (item.id.startsWith(`item-${unitType}-${itemNumber}-`) ||
+            item.id.includes(`-${itemNumber}-${itemDateStr}`)))
     );
   },
 
@@ -447,7 +447,7 @@ const UI = {
     }
     const contentRef = Algorithm.formatContentReference(unitType, actualUnitNumber);
     const existingItem = this.findExistingItem(allItems, unitType, itemNumber, itemDateStr, stableId);
-    
+
     if (!existingItem) {
       // Create and save new item with stable ID
       const newItem = {
@@ -481,24 +481,24 @@ const UI = {
   // Clean up duplicate items based on stable ID pattern
   cleanupDuplicateItems(config) {
     if (!config) return;
-    
+
     const allItems = Storage.getAllItems();
     const unitType = config.unit_type || 'page';
     const startDate = new Date(config.start_date);
     const totalUnits = config.total_units || 30;
     const seen = new Map(); // Map of stableId -> item
     const itemsToKeep = [];
-    
+
     // First, process all items and group by stable ID
     allItems.forEach(item => {
       if (item.status !== 'active') {
         itemsToKeep.push(item);
         return;
       }
-      
+
       // Try to determine the item's stable ID
       let stableId = null;
-      
+
       // If item already has stable ID format, use it
       if (item.id && item.id.startsWith(`item-${unitType}-`)) {
         const idParts = item.id.split('-');
@@ -507,7 +507,7 @@ const UI = {
           stableId = item.id;
         }
       }
-      
+
       // If no stable ID, try to infer from date_memorized
       if (!stableId && item.date_memorized) {
         // Calculate which item number this should be based on date
@@ -519,7 +519,7 @@ const UI = {
           stableId = this.generateItemId(unitType, itemNumber, item.date_memorized);
         }
       }
-      
+
       if (stableId) {
         if (seen.has(stableId)) {
           // Duplicate found - merge reviews and keep the one with stable ID
@@ -532,7 +532,7 @@ const UI = {
             ...(existingItem.reviews_missed || []),
             ...(item.reviews_missed || [])
           ])];
-          
+
           existingItem.reviews_completed = mergedReviewsCompleted;
           existingItem.reviews_missed = mergedReviewsMissed;
           // Keep the content_reference from the most recent item (current language)
@@ -548,7 +548,7 @@ const UI = {
         itemsToKeep.push(item);
       }
     });
-    
+
     // Save cleaned up items
     if (itemsToKeep.length !== allItems.length) {
       localStorage.setItem('quran_memorization_items', JSON.stringify(itemsToKeep));
@@ -559,12 +559,12 @@ const UI = {
   updateNavbarLabel(date = null) {
     const navLabel = document.querySelector('#nav-today .nav-label'); // Use querySelector for complex selector
     if (!navLabel) return;
-    
+
     const targetDate = date || this.currentDate || new Date();
     const today = DateUtils.normalizeDate(new Date());
     const target = DateUtils.normalizeDate(targetDate);
     const isToday = DateUtils.isSameLocalDay(targetDate, today);
-    
+
     if (isToday) {
       // Reset to "Today" translation
       navLabel.setAttribute('data-i18n', 'nav.today');
@@ -594,10 +594,10 @@ const UI = {
     const date = targetDate !== null && targetDate !== undefined ? targetDate : today;
     this.currentDate = date;
     const dateStr = DateUtils.getLocalDateString(date);
-    
+
     // Update navbar label to show day name if not today
     this.updateNavbarLabel(date);
-    
+
     // Determine if this is a selected date (not real-time today)
     const normalizedToday = DateUtils.normalizeDate(new Date());
     const target = DateUtils.normalizeDate(date);
@@ -608,16 +608,16 @@ const UI = {
 
     // Get all items
     let allItems = Storage.getAllItems();
-    
+
     // Save new items first (before generating schedule to avoid duplicates)
     const startDate = DateUtils.normalizeDate(config.start_date);
     const daysSinceStart = DateUtils.daysDifference(date, startDate);
-    
+
     // Create items for all days up to and including target date (1 unit per day)
     // This ensures all units that should exist are created, so their reviews can be scheduled
     const totalUnits = config.total_units || DEFAULT_CONFIG.TOTAL_UNITS;
     const unitType = config.unit_type || DEFAULT_CONFIG.UNIT_TYPE;
-    
+
     // Create items for all days from start_date up to target date (or totalUnits, whichever is smaller)
     const daysToCreate = Math.min(daysSinceStart + 1, totalUnits);
     for (let day = 0; day < daysToCreate; day++) {
@@ -625,27 +625,27 @@ const UI = {
       itemDate.setDate(itemDate.getDate() + day);
       const itemDateStr = DateUtils.getLocalDateString(itemDate);
       const itemNumber = day + 1;
-      
+
       const item = this.createOrUpdateItem(unitType, itemNumber, itemDateStr, config, allItems);
       // Add to allItems if it's a new item (not already in array)
       if (!allItems.find(i => i.id === item.id)) {
         allItems.push(item);
       }
     }
-    
+
     // Generate schedule with storage check function
     // Pass isSelectedDate to indicate if we're viewing a manually selected date
     const schedule = Algorithm.getDailySchedule(
-      dateStr, 
-      allItems, 
+      dateStr,
+      allItems,
       config,
       (id, station, date) => Storage.isReviewCompleted(id, station, date),
       isSelectedDate
     );
-    
+
     // Combine all tasks with priorities
     const allTasks = [];
-    
+
     // New memorization - Priority 1
     schedule.new_memorization.forEach(item => {
       allTasks.push({
@@ -654,7 +654,7 @@ const UI = {
         station: item.dueStation || STATIONS.STATION_1
       });
     });
-    
+
     // Yesterday's review - Priority 2
     schedule.yesterday_review.forEach(item => {
       allTasks.push({
@@ -663,7 +663,7 @@ const UI = {
         station: item.dueStation || STATIONS.STATION_3
       });
     });
-    
+
     // Spaced review - Priority 3
     schedule.spaced_review.forEach(item => {
       allTasks.push({
@@ -672,30 +672,30 @@ const UI = {
         station: item.dueStation || null
       });
     });
-    
+
     // Deduplicate tasks: same item.id + station combination should only appear once
     // Use Map with composite key to track unique tasks
     const uniqueTasksMap = new Map();
     allTasks.forEach(task => {
       const station = task.station || STATIONS.STATION_1;
       const taskKey = `${task.item.id}-${station}-${dateStr}`;
-      
+
       // If we haven't seen this task before, or if this one has lower priority number (higher priority), keep it
       const existing = uniqueTasksMap.get(taskKey);
       if (!existing || task.priority < existing.priority) {
         uniqueTasksMap.set(taskKey, task);
       }
     });
-    
+
     // Convert back to array
     const uniqueTasks = Array.from(uniqueTasksMap.values());
-    
+
     // Mark tasks as completed or not
     uniqueTasks.forEach(task => {
       const station = task.station || STATIONS.STATION_1;
       task.isCompleted = Storage.isReviewCompleted(task.item.id, station, dateStr);
     });
-    
+
     // Sort: unchecked first (by priority, then content), then checked (by priority, then content)
     uniqueTasks.sort((a, b) => {
       // First, separate completed and uncompleted
@@ -709,7 +709,7 @@ const UI = {
       // Then by content reference
       return a.item.content_reference.localeCompare(b.item.content_reference);
     });
-    
+
     // Render quick stats
     const statsContainer = DOMCache.getElementById('today-stats');
     if (statsContainer) {
@@ -719,7 +719,7 @@ const UI = {
       for (const task of uniqueTasks) {
         if (task.isCompleted) completed++;
       }
-      
+
       const stats = Components.createQuickStats(total, completed);
       // Use DocumentFragment for batch DOM updates
       const fragment = document.createDocumentFragment();
@@ -727,16 +727,16 @@ const UI = {
       statsContainer.innerHTML = '';
       statsContainer.appendChild(fragment);
     }
-    
+
     // Render unified task list
     const tasksContainer = DOMCache.getElementById('today-tasks');
     if (tasksContainer) {
       // Clear container first to prevent duplicates
       tasksContainer.innerHTML = '';
-      
+
       // Use DocumentFragment for batch DOM updates
       const fragment = document.createDocumentFragment();
-      
+
       if (uniqueTasks.length === 0) {
         const empty = Components.createEmptyState(i18n.t('dashboard.noItems'));
         fragment.appendChild(empty);
@@ -746,30 +746,30 @@ const UI = {
           fragment.appendChild(taskCard);
         });
       }
-      
+
       tasksContainer.appendChild(fragment);
     }
   },
-  
+
   // Create all planned items upfront
   createAllPlannedItems(config) {
     if (!config || !config.start_date) return;
-    
+
     // Clean up duplicates first
     this.cleanupDuplicateItems(config);
-    
+
     const startDate = DateUtils.normalizeDate(config.start_date);
     const totalUnits = config.total_units || DEFAULT_CONFIG.TOTAL_UNITS;
     const unitType = config.unit_type || DEFAULT_CONFIG.UNIT_TYPE;
     const allItems = Storage.getAllItems();
-    
+
     // Create items for all planned units
     for (let day = 0; day < totalUnits; day++) {
       const itemDate = new Date(startDate);
       itemDate.setDate(itemDate.getDate() + day);
       const itemDateStr = DateUtils.getLocalDateString(itemDate);
       const itemNumber = day + 1;
-      
+
       this.createOrUpdateItem(unitType, itemNumber, itemDateStr, config, allItems);
     }
   },
@@ -781,17 +781,17 @@ const UI = {
       this.showView('setup-view');
       return;
     }
-    
+
     // Ensure all planned items exist
     this.createAllPlannedItems(config);
-    
+
     const allItems = Storage.getActiveItems();
     const timelineContainer = DOMCache.getElementById('progress-timeline');
     if (!timelineContainer) return;
-    
+
     // Use DocumentFragment for batch DOM updates
     const fragment = document.createDocumentFragment();
-    
+
     if (allItems.length === 0) {
       const empty = Components.createEmptyState(i18n.t('dashboard.noItems'));
       fragment.appendChild(empty);
@@ -802,17 +802,17 @@ const UI = {
         const dateB = new Date(b.date_memorized);
         return dateA - dateB; // Oldest first
       });
-      
+
       sortedItems.forEach(item => {
         const timelineItem = Components.createProgressTimelineItem(item);
         fragment.appendChild(timelineItem);
       });
     }
-    
+
     timelineContainer.innerHTML = '';
     timelineContainer.appendChild(fragment);
   },
-  
+
   // Legacy method for backward compatibility
   renderDailySchedule(targetDate = null) {
     this.renderTodayView(targetDate);
@@ -822,10 +822,10 @@ const UI = {
   renderScheduleSection(containerId, items, defaultStation) {
     const container = DOMCache.getElementById(containerId);
     if (!container) return;
-    
+
     // Use DocumentFragment for batch DOM updates
     const fragment = document.createDocumentFragment();
-    
+
     if (items.length === 0) {
       const empty = Components.createEmptyState(i18n.t('dashboard.noItems'));
       fragment.appendChild(empty);
@@ -836,7 +836,7 @@ const UI = {
         fragment.appendChild(scheduleItem);
       });
     }
-    
+
     container.innerHTML = '';
     container.appendChild(fragment);
   },
@@ -848,7 +848,7 @@ const UI = {
       this.showView('setup-view');
       return;
     }
-    
+
     // Initialize language toggle
     const languageToggle = DOMCache.getElementById('settings-language-toggle');
     if (languageToggle) {
@@ -861,7 +861,7 @@ const UI = {
         }
       });
     }
-    
+
     // Initialize theme toggle
     const themeToggle = DOMCache.getElementById('settings-theme-toggle');
     if (themeToggle) {
@@ -874,21 +874,21 @@ const UI = {
         }
       });
     }
-    
+
     // Set time inputs
     const morningHourInput = DOMCache.getElementById('settings-morning-hour');
     const eveningHourInput = DOMCache.getElementById('settings-evening-hour');
-    
+
     if (morningHourInput) {
       const morningHour = config.morning_hour !== undefined ? config.morning_hour : DEFAULT_CONFIG.MORNING_HOUR;
       morningHourInput.value = `${String(morningHour).padStart(2, '0')}:00`;
     }
-    
+
     if (eveningHourInput) {
       const eveningHour = config.evening_hour !== undefined ? config.evening_hour : DEFAULT_CONFIG.EVENING_HOUR;
       eveningHourInput.value = `${String(eveningHour).padStart(2, '0')}:00`;
     }
-    
+
     // Initialize toggle event listeners
     this.initSettingsToggles();
   },
@@ -903,7 +903,7 @@ const UI = {
           const value = btn.getAttribute('data-value');
           languageToggle.querySelectorAll('.toggle-option').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
-          
+
           const config = Storage.getConfig();
           if (config) {
             config.language = value;
@@ -916,7 +916,7 @@ const UI = {
         });
       });
     }
-    
+
     // Theme toggle
     const themeToggle = DOMCache.getElementById('settings-theme-toggle');
     if (themeToggle) {
@@ -925,7 +925,7 @@ const UI = {
           const value = btn.getAttribute('data-value');
           themeToggle.querySelectorAll('.toggle-option').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
-          
+
           const config = Storage.getConfig();
           if (config) {
             config.theme = value;
@@ -944,21 +944,21 @@ const UI = {
     if (setupForm) {
       setupForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        
+
         // Get values from toggles
         const unitTypeToggle = DOMCache.getElementById('unit-type-toggle');
         const languageToggle = DOMCache.getElementById('setup-language-toggle');
         const themeToggle = DOMCache.getElementById('setup-theme-toggle');
-        
+
         const unitType = unitTypeToggle?.querySelector('.toggle-option.active')?.getAttribute('data-value') || DEFAULT_CONFIG.UNIT_TYPE;
         const language = languageToggle?.querySelector('.toggle-option.active')?.getAttribute('data-value') || DEFAULT_CONFIG.LANGUAGE;
         const theme = themeToggle?.querySelector('.toggle-option.active')?.getAttribute('data-value') || DEFAULT_CONFIG.THEME;
-        
+
         const startPageInput = document.getElementById('start-page');
-        const startPage = (unitType === 'page' && startPageInput) 
-          ? parseInt(startPageInput.value) || 1 
+        const startPage = (unitType === 'page' && startPageInput)
+          ? parseInt(startPageInput.value) || 1
           : 1;
-        
+
         const config = {
           unit_type: unitType,
           total_units: parseInt(document.getElementById('total-units').value) || 30,
@@ -970,18 +970,18 @@ const UI = {
           evening_hour: DEFAULT_CONFIG.EVENING_HOUR,
           start_page: startPage
         };
-        
+
         Storage.saveConfig(config);
-        
+
         // Create all items upfront so they appear in progress view
         this.createAllPlannedItems(config);
-        
+
         Theme.setTheme(theme);
         i18n.init(language);
         i18n.translatePage();
         this.initTabNavigation();
         this.showView('today-view');
-        
+
         // Set current date to start_date so tasks for that day are shown
         // This ensures tasks are created for the selected day regardless of current time
         const startDate = new Date(config.start_date);
@@ -989,11 +989,11 @@ const UI = {
         this.renderTodayView(startDate);
       });
     }
-    
+
     // Settings time inputs - save on change
     const morningHourInput = DOMCache.getElementById('settings-morning-hour');
     const eveningHourInput = DOMCache.getElementById('settings-evening-hour');
-    
+
     if (morningHourInput) {
       morningHourInput.addEventListener('change', () => {
         const config = Storage.getConfig();
@@ -1004,7 +1004,7 @@ const UI = {
         }
       });
     }
-    
+
     if (eveningHourInput) {
       eveningHourInput.addEventListener('change', () => {
         const config = Storage.getConfig();
@@ -1015,7 +1015,23 @@ const UI = {
         }
       });
     }
-    
+
+    // Privacy Policy button
+    const privacyBtn = DOMCache.getElementById('settings-privacy-btn');
+    if (privacyBtn) {
+      privacyBtn.addEventListener('click', () => {
+        this.showView('privacy-view');
+      });
+    }
+
+    // Privacy Policy back button
+    const privacyBackBtn = DOMCache.getElementById('privacy-back-btn');
+    if (privacyBackBtn) {
+      privacyBackBtn.addEventListener('click', () => {
+        this.showView('settings-view');
+      });
+    }
+
     // Export button
     const exportBtn = DOMCache.getElementById('settings-export-btn');
     if (exportBtn) {
@@ -1034,7 +1050,7 @@ const UI = {
         }
       });
     }
-    
+
     // Import button
     const importBtn = DOMCache.getElementById('settings-import-btn');
     if (importBtn) {
@@ -1068,22 +1084,22 @@ const UI = {
         input.click();
       });
     }
-    
+
     // Reset button
     const resetBtn = DOMCache.getElementById('settings-reset-btn');
     if (resetBtn) {
       resetBtn.addEventListener('click', () => {
         Dialog.showResetConfirm(() => {
           Storage.clearAll();
-        Theme.init();
-      i18n.init(DEFAULT_CONFIG.LANGUAGE);
+          Theme.init();
+          i18n.init(DEFAULT_CONFIG.LANGUAGE);
           i18n.translatePage();
           this.showView('setup-view');
           this.renderSetupView();
         });
       });
     }
-    
+
     // Progress add button
     const progressAddBtn = DOMCache.getElementById('progress-add-btn');
     if (progressAddBtn) {
@@ -1091,7 +1107,7 @@ const UI = {
         Dialog.showAddMemorizationModal((data) => {
           const { unitType, totalUnits, startDate, progressionName, startPage } = data;
           const config = Storage.getConfig();
-          
+
           if (config) {
             // Update config with new values (following the same logic as startup wizard)
             // This allows adding new memorization plans with different parameters
@@ -1101,10 +1117,10 @@ const UI = {
             config.progression_name = progressionName;
             config.start_page = startPage || 1;
             Storage.saveConfig(config);
-            
+
             // Create all items upfront so they appear in progress view
             this.createAllPlannedItems(config);
-            
+
             this.renderProgressView();
             this.renderTodayView();
             if (window.Calendar) {
@@ -1114,7 +1130,7 @@ const UI = {
         });
       });
     }
-    
+
     // Theme toggles (all views) - use querySelectorAll for complex selector
     const themeToggles = document.querySelectorAll('#theme-toggle, #theme-toggle-progress, #theme-toggle-calendar, #theme-toggle-settings, #theme-toggle-credits');
     themeToggles.forEach(toggle => {
@@ -1122,7 +1138,7 @@ const UI = {
         Theme.toggle();
       });
     });
-    
+
     // Language toggles (all views) - use querySelectorAll for complex selector
     const languageToggles = document.querySelectorAll('#language-toggle, #language-toggle-progress, #language-toggle-calendar, #language-toggle-settings, #language-toggle-credits');
     languageToggles.forEach(toggle => {
@@ -1159,11 +1175,11 @@ const UI = {
       });
     });
     this.updateLanguageToggles();
-    
+
     // Calendar navigation is handled by Calendar.setupNavigationButtons()
     // which respects RTL/LTR language direction
   },
-  
+
   // Update language toggle button text (all views)
   updateLanguageToggles() {
     // Use querySelectorAll for complex selector
@@ -1171,12 +1187,12 @@ const UI = {
     const currentLang = i18n.getLanguage();
     languageToggles.forEach(toggle => {
       const langText = toggle.querySelector('.lang-text');
-        if (langText) {
+      if (langText) {
         langText.textContent = currentLang === LANGUAGES.ENGLISH ? 'AR' : 'EN';
       }
     });
   },
-  
+
   // Legacy method for backward compatibility
   updateLanguageToggle() {
     this.updateLanguageToggles();

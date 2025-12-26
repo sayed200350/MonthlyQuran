@@ -14,10 +14,25 @@ const App = {
     const config = Storage.getConfig();
     
     // Fetch surah metadata in background (if not cached)
+    // Fetch surah metadata in background (if not cached)
     if (typeof QuranAPI !== 'undefined') {
-      QuranAPI.fetchSurahMetadata().catch(err => {
-        Logger.error('Error fetching surah metadata on init:', err);
-      });
+      const cachedMeta = localStorage.getItem(QuranAPI.STORAGE_KEY);
+      if (!cachedMeta && typeof UI !== 'undefined' && UI.showToast) {
+        UI.showToast('Downloading Quran data...', 'info');
+      }
+      
+      QuranAPI.fetchSurahMetadata()
+        .then(data => {
+            if (data && !cachedMeta && typeof UI !== 'undefined' && UI.showToast) {
+                 UI.showToast('Quran data downloaded successfully', 'success');
+            }
+        })
+        .catch(err => {
+          Logger.error('Error fetching surah metadata on init:', err);
+          if (!cachedMeta && typeof UI !== 'undefined' && UI.showToast) {
+             UI.showToast('Failed to download Quran data. Check internet connection.', 'error');
+          }
+        });
     }
     
     if (typeof UI === 'undefined') {
