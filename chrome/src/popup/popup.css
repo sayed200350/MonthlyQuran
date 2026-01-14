@@ -124,6 +124,9 @@ body {
 
 /* Setup view adjustments */
 #setup-view .main {
+    /* Override flex centering from core styles to prevent top clipping when content overflows */
+    display: block;
+    padding-top: 1rem;
     padding-bottom: 1rem;
 }
 
