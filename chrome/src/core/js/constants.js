@@ -38,6 +38,7 @@ const UNIT_TYPES = {
   PAGE: 'page',
   VERSE: 'verse',
   HIZB: 'hizb',
+  QUARTER_HIZB: 'quarter_hizb',
   JUZ: 'juz'
 };
 

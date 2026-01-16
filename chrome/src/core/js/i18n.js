@@ -14,6 +14,7 @@ const translations = {
       totalPages: 'Total Pages',
       totalVerses: 'Total Verses',
       totalHizbs: 'Total Hizbs',
+      totalQuarterHizbs: 'Total Quarter Hizbs',
       totalJuzs: 'Total Juzs',
       startDate: 'Start Date',
       startPage: 'Start Page Number',
@@ -106,7 +107,10 @@ const translations = {
       },
       newTaskCount: '{{count}} new memorization(s)',
       yesterdayTaskCount: '{{count}} yesterday review(s)',
-      spacedTaskCount: '{{count}} spaced review(s)'
+      spacedTaskCount: '{{count}} spaced review(s)',
+      legendNew: 'New Memorization',
+      legendYesterday: "Yesterday's Review",
+      legendSpaced: 'Spaced Review'
     },
     stations: {
       1: 'Station 1 (Morning)',
@@ -121,6 +125,7 @@ const translations = {
       page: 'Page',
       verse: 'Ayah',
       hizb: 'Hizb',
+      quarter_hizb: 'Quarter',
       juz: 'Juz'
     },
     theme: {
@@ -208,6 +213,7 @@ const translations = {
       totalPages: 'إجمالي الصفحات',
       totalVerses: 'إجمالي الآيات',
       totalHizbs: 'إجمالي الأحزاب',
+      totalQuarterHizbs: 'إجمالي أرباع الأحزاب',
       totalJuzs: 'إجمالي الأجزاء',
       startDate: 'تاريخ البدء',
       startPage: 'رقم الصفحة الأولى',
@@ -300,7 +306,10 @@ const translations = {
       },
       newTaskCount: '{{count}} حفظ جديد',
       yesterdayTaskCount: '{{count}} مراجعة الأمس',
-      spacedTaskCount: '{{count}} مراجعة متتابعة'
+      spacedTaskCount: '{{count}} مراجعة متتابعة',
+      legendNew: 'حفظ جديد',
+      legendYesterday: 'مراجعة الأمس',
+      legendSpaced: 'مراجعة متتابعة'
     },
     stations: {
       1: 'المحطة 1 (الصباح)',
@@ -315,6 +324,7 @@ const translations = {
       page: 'صفحة',
       verse: 'آية',
       hizb: 'حزب',
+      quarter_hizb: 'ربع',
       juz: 'جزء'
     },
     theme: {

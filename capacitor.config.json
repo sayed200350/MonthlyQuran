@@ -1,5 +1,12 @@
 {
   "appId": "com.monthlyquran.app",
   "appName": "MonthlyQuran",
-  "webDir": "www"
+  "webDir": "www",
+  "android": {
+    "webContentsDebuggingEnabled": false,
+    "allowMixedContent": true
+  },
+  "server": {
+    "cleartext": false
+  }
 }

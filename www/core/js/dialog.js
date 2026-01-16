@@ -351,7 +351,7 @@ const Dialog = {
     const unitTypeToggle = document.createElement('div');
     unitTypeToggle.className = 'toggle-options';
     unitTypeToggle.id = 'add-memorization-unit-type-toggle';
-    ['page', 'verse', 'hizb', 'juz'].forEach(unit => {
+    ['page', 'verse', 'quarter_hizb', 'hizb', 'juz'].forEach(unit => {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'toggle-option';
@@ -410,6 +410,9 @@ const Dialog = {
       } else if (selectedUnitType === 'verse') {
         labelKey = 'setup.totalVerses';
         maxUnits = 6349;
+      } else if (selectedUnitType === 'quarter_hizb') {
+        labelKey = 'setup.totalQuarterHizbs';
+        maxUnits = 240;
       } else if (selectedUnitType === 'hizb') {
         labelKey = 'setup.totalHizbs';
         maxUnits = 60;
@@ -792,7 +795,7 @@ const Dialog = {
 
     var unitTypeToggle = document.createElement('div');
     unitTypeToggle.className = 'toggle-options';
-    var units = ['page', 'verse', 'hizb', 'juz'];
+    var units = ['page', 'verse', 'quarter_hizb', 'hizb', 'juz'];
     for (var i = 0; i < units.length; i++) {
       (function (unit) {
         var btn = document.createElement('button');
@@ -880,6 +883,7 @@ const Dialog = {
       var maxUnits = 604;
       if (type === 'page') { labelKey = 'setup.totalPages'; maxUnits = 604; }
       else if (type === 'verse') { labelKey = 'setup.totalVerses'; maxUnits = 6349; }
+      else if (type === 'quarter_hizb') { labelKey = 'setup.totalQuarterHizbs'; maxUnits = 240; }
       else if (type === 'hizb') { labelKey = 'setup.totalHizbs'; maxUnits = 60; }
       else if (type === 'juz') { labelKey = 'setup.totalJuzs'; maxUnits = 30; }
       totalUnitsLabel.textContent = i18n.t(labelKey);

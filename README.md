@@ -72,6 +72,16 @@ npm run android:run
 - **Quran API Integration**: Fetches metadata for intuitive setup.
 - **Data Export/Import**: JSON-based backup system.
 
+## Algorithm Credits
+
+This application implements the **7-Station Spaced Repetition Algorithm** for Quran memorization, developed by **Dr. Wafaa Orabi** (د. وفاء عرابي).
+
+The algorithm is based on scientific principles of memory retention, specifically the **Forgetting Curve** discovered by Hermann Ebbinghaus. Instead of mass repetition (cramming), the system uses spaced repetition at calculated intervals to move content from short-term to long-term memory through 7 review stations over approximately one month.
+
+Each station represents a calculated timing for repetition to enhance permanent memorization: repeating the text several hours after the initial memorization, then reviews after days and weeks. This transfers information from short-term to long-term memory, utilizing the forgetting curve and effective repetitive learning techniques.
+
+📞 **Contact**: [Dr. Wafaa Orabi's Telegram Channel](https://t.me/wafaa_oraby_coach)
+
 ## Documentation
 
 Detailed documentation is available in the `docs/` folder:

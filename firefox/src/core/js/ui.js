@@ -390,6 +390,9 @@ const UI = {
     } else if (selectedUnitType === 'verse') {
       labelKey = 'setup.totalVerses';
       maxUnits = 6349;
+    } else if (selectedUnitType === 'quarter_hizb') {
+      labelKey = 'setup.totalQuarterHizbs';
+      maxUnits = 240;
     } else if (selectedUnitType === 'hizb') {
       labelKey = 'setup.totalHizbs';
       maxUnits = 60;

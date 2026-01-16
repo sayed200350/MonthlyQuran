@@ -1,5 +1,6 @@
-const CACHE_NAME = 'wird-reminder-v1.5.0';
-'./',
+const CACHE_NAME = 'wird-reminder-v1.5.1';
+const urlsToCache = [
+  './',
   './index.html',
   './core/css/fonts.css',
   './core/css/themes.css',
