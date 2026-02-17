@@ -629,6 +629,7 @@ const UIComponents = {
     container.className = 'consistency-map';
 
     // --- Aggregate daily counts from reviews_completed ---
+    
     const dailyCounts = {};
     (items || []).forEach(item => {
       (item.reviews_completed || []).forEach(entry => {
