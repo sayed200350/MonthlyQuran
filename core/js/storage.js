@@ -357,6 +357,27 @@ const Storage = {
     }
   },
 
+  async unmarkBacklogItemComplete(itemId, station, rescheduledDate) {
+    try {
+      const queue = await this.getBacklogQueue();
+      if (!queue) return false;
+      const entry = queue.items.find(e =>
+        e.item_id === itemId &&
+        e.station === station &&
+        e.rescheduled_date === rescheduledDate &&
+        e.status === 'completed'
+      );
+      if (entry) {
+        entry.status = 'pending';
+        await this.saveBacklogQueue(queue);
+      }
+      return true;
+    } catch (error) {
+      Logger.error('Error unmarking backlog item complete:', error);
+      return false;
+    }
+  },
+
   /**
    * Clear all data
    * @returns {Promise<boolean>} True if successful, false otherwise

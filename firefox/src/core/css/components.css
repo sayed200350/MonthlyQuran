@@ -516,6 +516,11 @@
   color: white;
 }
 
+.priority-overdue {
+  background-color: hsl(0, 75%, 55%);
+  color: white;
+}
+
 .priority-catchup {
   background-color: hsl(280, 70%, 55%);
   color: white;

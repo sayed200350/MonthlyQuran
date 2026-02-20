@@ -174,6 +174,7 @@ const translations = {
       spreadOption: '{{days}} days',
       confirmButton: 'Schedule Catch-up',
       catchupBadge: 'Catch-up',
+      overdueBadge: 'Overdue',
       progressLabel: '{{remaining}} of {{total}} catch-up tasks remaining'
     },
     aria: {
@@ -400,6 +401,7 @@ const translations = {
       spreadOption: '{{days}} أيام',
       confirmButton: 'جدولة المراجعات التعويضية',
       catchupBadge: 'تعويضي',
+      overdueBadge: 'متأخر',
       progressLabel: 'متبقي {{remaining}} من {{total}} مهام تعويضية'
     },
     aria: {

@@ -869,10 +869,16 @@ const UI = {
 
     // Inject backlog tasks for real today (check actual date, not how function was called)
     const isRealToday = target.getTime() === normalizedToday.getTime();
+    let backlogQueue = null;
+    let cachedOverdueItems = null;
     if (isRealToday) {
-      const queue = await Storage.getBacklogQueue();
-      if (queue) {
-        const catchupTasks = Backlog.getTasksForDate(queue, dateStr, allItems);
+      backlogQueue = await Storage.getBacklogQueue();
+      // Always detect overdue items (needed for banner and for showing new ones)
+      cachedOverdueItems = Backlog.detectOverdueReviews(allItems, dateStr);
+
+      if (backlogQueue) {
+        // Active queue exists — inject scheduled catch-up tasks for today
+        const catchupTasks = Backlog.getTasksForDate(backlogQueue, dateStr, allItems);
         for (const catchupTask of catchupTasks) {
           const taskKey = `${catchupTask.item.id}-${catchupTask.station}-${dateStr}`;
           if (!uniqueTasksMap.has(taskKey)) {
@@ -880,7 +886,49 @@ const UI = {
               item: { ...catchupTask.item, dueStation: catchupTask.station },
               priority: PRIORITY.CATCHUP,
               station: catchupTask.station,
-              isCatchup: true
+              isCatchup: true,
+              originalDueDate: catchupTask.originalDueDate
+            });
+          }
+        }
+
+        // Also inject overdue items NOT already covered by the queue
+        // Only count pending items with today or future dates (stale/completed items shouldn't block)
+        const queuedKeys = new Set(
+          backlogQueue.items
+            .filter(e => e.status === 'pending' && e.rescheduled_date >= dateStr)
+            .map(e => `${e.item_id}-${e.station}`)
+        );
+        for (const entry of cachedOverdueItems) {
+          if (queuedKeys.has(`${entry.item_id}-${entry.station}`)) continue;
+          const item = allItems.find(i => i.id === entry.item_id);
+          if (!item) continue;
+          const taskKey = `${item.id}-${entry.station}-${dateStr}`;
+          if (!uniqueTasksMap.has(taskKey)) {
+            uniqueTasksMap.set(taskKey, {
+              item: { ...item, dueStation: entry.station },
+              priority: PRIORITY.CATCHUP,
+              station: entry.station,
+              isOverdue: true,
+              daysOverdue: entry.days_overdue,
+              originalDueDate: entry.original_due_date
+            });
+          }
+        }
+      } else {
+        // No queue — show all overdue tasks directly in today's list
+        for (const entry of cachedOverdueItems) {
+          const item = allItems.find(i => i.id === entry.item_id);
+          if (!item) continue;
+          const taskKey = `${item.id}-${entry.station}-${dateStr}`;
+          if (!uniqueTasksMap.has(taskKey)) {
+            uniqueTasksMap.set(taskKey, {
+              item: { ...item, dueStation: entry.station },
+              priority: PRIORITY.CATCHUP,
+              station: entry.station,
+              isOverdue: true,
+              daysOverdue: entry.days_overdue,
+              originalDueDate: entry.original_due_date
             });
           }
         }
@@ -893,7 +941,9 @@ const UI = {
     // Mark tasks as completed or not
     for (const task of uniqueTasks) {
       const station = task.station || (window.STATIONS ? window.STATIONS.STATION_1 : 1);
-      task.isCompleted = await Storage.isReviewCompleted(task.item.id, station, dateStr);
+      // Overdue and catch-up tasks use original due date as the review key
+      const reviewDate = (task.isOverdue || task.isCatchup) && task.originalDueDate ? task.originalDueDate : dateStr;
+      task.isCompleted = await Storage.isReviewCompleted(task.item.id, station, reviewDate);
     }
 
     // Sort: unchecked first (by priority, then content), then checked (by priority, then content)
@@ -930,7 +980,7 @@ const UI = {
 
     // Render backlog banner or progress bar (only for real today)
     if (isRealToday) {
-      await this._renderBacklogUI(allItems, dateStr);
+      await this._renderBacklogUI(dateStr, backlogQueue, cachedOverdueItems);
     }
 
     // Render unified task list
@@ -946,8 +996,8 @@ const UI = {
         const empty = UIComponents.createEmptyState(i18n.t('dashboard.noItems'));
         fragment.appendChild(empty);
       } else {
-        uniqueTasks.forEach(({ item, priority, station, isCompleted, isCatchup }) => {
-          const taskCard = UIComponents.createTaskCard(item, station, priority, isCompleted, config.unit_type, config.unit_size, config, isCatchup || false);
+        uniqueTasks.forEach(({ item, priority, station, isCompleted, isCatchup, isOverdue, originalDueDate }) => {
+          const taskCard = UIComponents.createTaskCard(item, station, priority, isCompleted, config.unit_type, config.unit_size, config, isCatchup || false, isOverdue || false, originalDueDate || null);
           fragment.appendChild(taskCard);
         });
       }
@@ -981,15 +1031,14 @@ const UI = {
 
   // --- Backlog UI Methods ---
 
-  async _renderBacklogUI(allItems, todayStr) {
+  async _renderBacklogUI(todayStr, queue, overdueItems) {
     // Remove any existing backlog UI
     const existingBanner = document.getElementById('backlog-banner');
     if (existingBanner) existingBanner.remove();
 
-    // Check for existing active queue first
-    const existingQueue = await Storage.getBacklogQueue();
-    if (existingQueue) {
-      const prunedQueue = Backlog.pruneQueue(existingQueue, todayStr);
+    // Active queue exists — show progress bar
+    if (queue) {
+      const prunedQueue = Backlog.pruneQueue(queue, todayStr);
       if (prunedQueue.items.length > 0) {
         await Storage.saveBacklogQueue(prunedQueue);
         this._renderBacklogProgressBar(prunedQueue);
@@ -999,11 +1048,11 @@ const UI = {
       }
     }
 
-    // Detect overdue reviews
-    const overdueItems = Backlog.detectOverdueReviews(allItems, todayStr);
-    if (!Backlog.shouldShowBanner(overdueItems)) return;
+    // No queue — show reschedule banner only if items are overdue beyond threshold
+    if (!overdueItems || overdueItems.length === 0) return;
+    const thresholdItems = overdueItems.filter(e => e.days_overdue >= BACKLOG_OVERDUE_THRESHOLD_DAYS);
+    if (thresholdItems.length === 0) return;
 
-    // Show the banner
     const banner = this._createBacklogBanner(overdueItems.length, () => {
       this._showBacklogDialog(overdueItems, todayStr);
     });

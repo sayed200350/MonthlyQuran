@@ -63,16 +63,6 @@ const Backlog = {
   },
 
   /**
-   * Determine whether the backlog banner should be shown.
-   * @param {Array} overdueItems - From detectOverdueReviews()
-   * @returns {boolean}
-   */
-  shouldShowBanner(overdueItems) {
-    if (!overdueItems || overdueItems.length === 0) return false;
-    return overdueItems.some(e => e.days_overdue >= BACKLOG_OVERDUE_THRESHOLD_DAYS);
-  },
-
-  /**
    * Build a backlog queue by distributing overdue items across future days.
    * @param {Array} overdueItems - Sorted overdue entries
    * @param {string} todayStr - Today's date YYYY-MM-DD
@@ -85,11 +75,15 @@ const Backlog = {
     const today = DateUtils.normalizeDate(todayStr);
     const queueItems = [];
 
-    // Build date slots starting from tomorrow
+    // Calculate minimum days needed to fit all items, extend beyond spreadDays if necessary
+    const minDaysNeeded = Math.ceil(overdueItems.length / dailyCapacity);
+    const actualSpreadDays = Math.max(spreadDays, minDaysNeeded);
+
+    // Build date slots starting from today
     const slots = [];
-    for (let i = 0; i < spreadDays; i++) {
+    for (let i = 0; i < actualSpreadDays; i++) {
       const slotDate = new Date(today);
-      slotDate.setDate(slotDate.getDate() + 1 + i);
+      slotDate.setDate(slotDate.getDate() + i);
       slots.push({ date: DateUtils.getLocalDateString(slotDate), count: 0 });
     }
 
@@ -115,8 +109,9 @@ const Backlog = {
     return {
       version: 1,
       created_at: new Date().toISOString(),
-      spread_days: spreadDays,
+      spread_days: actualSpreadDays,
       daily_capacity: dailyCapacity,
+      total_items: queueItems.length,
       items: queueItems
     };
   },
@@ -159,7 +154,7 @@ const Backlog = {
    */
   getQueueStats(queue) {
     if (!queue || !queue.items) return { total: 0, remaining: 0 };
-    const total = queue.items.length;
+    const total = queue.total_items || queue.items.length;
     const remaining = queue.items.filter(e => e.status === 'pending').length;
     return { total, remaining };
   },
@@ -173,12 +168,14 @@ const Backlog = {
    */
   pruneQueue(queue, todayStr) {
     if (!queue || !queue.items) return queue;
-    queue.items = queue.items.filter(e => {
-      if (e.status === 'completed') return false;
-      if (e.status === 'pending' && e.rescheduled_date < todayStr) return false;
-      return true;
-    });
-    return queue;
+    return {
+      ...queue,
+      items: queue.items.filter(e => {
+        if (e.status === 'completed') return false;
+        if (e.status === 'pending' && e.rescheduled_date < todayStr) return false;
+        return true;
+      })
+    };
   }
 };
 

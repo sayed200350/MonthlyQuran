@@ -16,7 +16,7 @@ const UIComponents = {
   },
 
   // Create a task card with priority badge
-  createTaskCard(item, stationNumber = null, priority = 1, isCompleted = false, unitType = 'page', unitSize = null, config = null, isCatchup = false) {
+  createTaskCard(item, stationNumber = null, priority = 1, isCompleted = false, unitType = 'page', unitSize = null, config = null, isCatchup = false, isOverdue = false, originalDueDate = null) {
     const card = document.createElement('div');
     card.className = 'schedule-item';
     card.dataset.itemId = item.id;
@@ -75,34 +75,34 @@ const UIComponents = {
     const meta = document.createElement('div');
     meta.className = 'schedule-item-meta';
 
-    // Priority badge
+    // Priority / type badge
     const badge = document.createElement('span');
-    let priorityClass = 'priority-spaced';
-    let priorityText = i18n.t('today.prioritySpaced');
 
-    // Use priority constants safely (fall back to numeric values if global object missing)
-    const PRIORITY_NEW = (window.PRIORITY && window.PRIORITY.NEW) || 1;
-    const PRIORITY_YESTERDAY = (window.PRIORITY && window.PRIORITY.YESTERDAY) || 2;
+    if (isOverdue) {
+      badge.className = 'priority-badge priority-overdue';
+      badge.textContent = i18n.t('backlog.overdueBadge');
+    } else if (isCatchup) {
+      badge.className = 'priority-badge priority-catchup';
+      badge.textContent = i18n.t('backlog.catchupBadge');
+    } else {
+      let priorityClass = 'priority-spaced';
+      let priorityText = i18n.t('today.prioritySpaced');
 
-    if (priority === PRIORITY_NEW) {
-      priorityClass = 'priority-new';
-      priorityText = i18n.t('today.priorityNew');
-    } else if (priority === PRIORITY_YESTERDAY) {
-      priorityClass = 'priority-yesterday';
-      priorityText = i18n.t('today.priorityYesterday');
+      const PRIORITY_NEW = (window.PRIORITY && window.PRIORITY.NEW) || 1;
+      const PRIORITY_YESTERDAY = (window.PRIORITY && window.PRIORITY.YESTERDAY) || 2;
+
+      if (priority === PRIORITY_NEW) {
+        priorityClass = 'priority-new';
+        priorityText = i18n.t('today.priorityNew');
+      } else if (priority === PRIORITY_YESTERDAY) {
+        priorityClass = 'priority-yesterday';
+        priorityText = i18n.t('today.priorityYesterday');
+      }
+
+      badge.className = `priority-badge ${priorityClass}`;
+      badge.textContent = priorityText;
     }
-
-    badge.className = `priority-badge ${priorityClass}`;
-    badge.textContent = priorityText;
     meta.appendChild(badge);
-
-    // Catch-up badge for rescheduled backlog tasks
-    if (isCatchup) {
-      const catchupBadge = document.createElement('span');
-      catchupBadge.className = 'priority-badge priority-catchup';
-      catchupBadge.textContent = i18n.t('backlog.catchupBadge');
-      meta.appendChild(catchupBadge);
-    }
 
     // Station label
     const stationLabel = document.createElement('span');
@@ -150,7 +150,9 @@ const UIComponents = {
         ? DateUtils.getLocalDateString(uiDate)
         : uiDate.toISOString().split('T')[0];
       const station = stationNumber || 1;
-      const currentlyCompleted = await Storage.isReviewCompleted(item.id, station, currentDateStr);
+      // For overdue/catch-up tasks, check completion against the original due date
+      const checkDate = (isOverdue || isCatchup) && originalDueDate ? originalDueDate : currentDateStr;
+      const currentlyCompleted = await Storage.isReviewCompleted(item.id, station, checkDate);
 
       // Add appropriate animation class
       if (currentlyCompleted) {
@@ -161,10 +163,18 @@ const UIComponents = {
 
       // Wait for animation to complete
       setTimeout(async () => {
+        // For overdue/catch-up tasks, use the original due date as the review key
+        // so detectOverdueReviews properly recognizes it as completed
+        const reviewDate = (isOverdue || isCatchup) && originalDueDate ? originalDueDate : currentDateStr;
+
         if (currentlyCompleted) {
-          await Storage.unmarkReviewComplete(item.id, station, currentDateStr);
+          await Storage.unmarkReviewComplete(item.id, station, reviewDate);
+          if (isCatchup) {
+            await Storage.unmarkBacklogItemComplete(item.id, station, currentDateStr);
+            Algorithm.clearScheduleCache();
+          }
         } else {
-          await Storage.markReviewComplete(item.id, station, currentDateStr);
+          await Storage.markReviewComplete(item.id, station, reviewDate);
           if (isCatchup) {
             await Storage.markBacklogItemComplete(item.id, station, currentDateStr);
             Algorithm.clearScheduleCache();
